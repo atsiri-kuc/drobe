@@ -3,23 +3,39 @@
   align-items: center;
   justify-content: space-between;
   padding-top: var(--space-4);
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 .log-header .page-title { margin-bottom: 0; }
+
+/* ── Date Range Filter ── */
+.log-filter-section {
+  margin-bottom: var(--space-4);
+}
 
 .log-date-filters {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
   align-items: center;
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-2);
 }
 
 .log-date-filters .chip {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.date-range-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.date-range-sep {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
 }
 
 .date-picker-wrapper {
@@ -37,7 +53,7 @@
 }
 
 .date-picker-input {
-  padding: var(--space-2) var(--space-3) var(--space-2) 34px;
+  padding: var(--space-2) var(--space-3) var(--space-2) 32px;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-full);
   background: var(--color-surface);
@@ -45,6 +61,7 @@
   font-size: var(--fs-xs);
   font-family: inherit;
   min-height: 36px;
+  width: 140px;
   cursor: pointer;
   transition: border-color var(--duration-fast) var(--ease-out);
 }
@@ -54,6 +71,36 @@
   border-color: var(--color-primary);
 }
 
+/* Quick picks */
+.quick-picks {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.quick-pick {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--fs-xs);
+  font-family: inherit;
+  cursor: pointer;
+  padding: 2px 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity var(--duration-fast);
+}
+
+.quick-pick:hover {
+  opacity: 0.7;
+}
+
+.quick-pick-dot {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-xs);
+}
+
 .log-day-count {
   margin-left: auto;
   font-size: var(--fs-xs);
@@ -61,6 +108,7 @@
   color: var(--color-text-tertiary);
 }
 
+/* ── Skeleton / Timeline ── */
 .log-skeleton-list {
   display: flex;
   flex-direction: column;
@@ -72,7 +120,6 @@
   border-radius: var(--radius-lg);
 }
 
-/* Timeline */
 .log-timeline {
   display: flex;
   flex-direction: column;

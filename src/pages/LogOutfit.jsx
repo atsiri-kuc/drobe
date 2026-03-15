@@ -12,13 +12,23 @@ function getOutfitDate(outfit) {
     : new Date(outfit.wornAt);
 }
 
+function toDateStr(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function formatShort(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 export default function LogOutfit() {
   const { user } = useAuth();
   const [outfits, setOutfits] = useState([]);
   const [items, setItems] = useState({});
   const [loading, setLoading] = useState(true);
   const [showLogModal, setShowLogModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(''); // '' means show all
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   useEffect(() => { if (user) loadData(); }, [user]);
 
@@ -43,14 +53,46 @@ export default function LogOutfit() {
     }
   }
 
-  // Filter outfits by selected date
-  const filteredOutfits = selectedDate
+  const hasFilter = fromDate || toDate;
+
+  const filteredOutfits = hasFilter
     ? outfits.filter(o => {
         const d = getOutfitDate(o);
-        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        return dateStr === selectedDate;
+        const dateStr = toDateStr(d);
+        if (fromDate && dateStr < fromDate) return false;
+        if (toDate && dateStr > toDate) return false;
+        return true;
       })
     : outfits;
+
+  function clearFilter() {
+    setFromDate('');
+    setToDate('');
+  }
+
+  function applyQuickPick(daysBack) {
+    const now = new Date();
+    const start = new Date(now);
+    start.setDate(start.getDate() - daysBack);
+    setFromDate(toDateStr(start));
+    setToDate(toDateStr(now));
+  }
+
+  function applyThisWeek() {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun
+    const start = new Date(now);
+    start.setDate(start.getDate() - day);
+    setFromDate(toDateStr(start));
+    setToDate(toDateStr(now));
+  }
+
+  function applyThisMonth() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    setFromDate(toDateStr(start));
+    setToDate(toDateStr(now));
+  }
 
   function groupByDate(list) {
     const groups = {};
@@ -83,33 +125,65 @@ export default function LogOutfit() {
         </button>
       </div>
 
-      {/* Date Filter */}
+      {/* Date Range Filter */}
       {outfits.length > 0 && (
-        <div className="log-date-filters">
-          <button
-            className={`chip ${!selectedDate ? 'active' : ''}`}
-            onClick={() => setSelectedDate('')}
-          >
-            All
-            <span className="chip-count">{outfits.length}</span>
-          </button>
+        <div className="log-filter-section">
+          <div className="log-date-filters">
+            <button
+              className={`chip ${!hasFilter ? 'active' : ''}`}
+              onClick={clearFilter}
+            >
+              All
+              <span className="chip-count">{outfits.length}</span>
+            </button>
 
-          <div className="date-picker-wrapper">
-            <Calendar size={16} className="date-picker-icon" />
-            <input
-              type="date"
-              className="date-picker-input"
-              value={selectedDate}
-              onChange={e => setSelectedDate(e.target.value)}
-            />
+            <div className="date-range-row">
+              <div className="date-picker-wrapper">
+                <Calendar size={14} className="date-picker-icon" />
+                <input
+                  type="date"
+                  className="date-picker-input"
+                  value={fromDate}
+                  onChange={e => setFromDate(e.target.value)}
+                  placeholder="From"
+                />
+              </div>
+              <span className="date-range-sep">→</span>
+              <div className="date-picker-wrapper">
+                <Calendar size={14} className="date-picker-icon" />
+                <input
+                  type="date"
+                  className="date-picker-input"
+                  value={toDate}
+                  onChange={e => setToDate(e.target.value)}
+                  placeholder="To"
+                />
+              </div>
+            </div>
+
+            {hasFilter && (
+              <button className="chip active" onClick={clearFilter}>
+                {fromDate && toDate
+                  ? `${formatShort(fromDate)} – ${formatShort(toDate)}`
+                  : fromDate
+                    ? `From ${formatShort(fromDate)}`
+                    : `Until ${formatShort(toDate)}`
+                }
+                &nbsp;({filteredOutfits.length})
+                <X size={14} />
+              </button>
+            )}
           </div>
 
-          {selectedDate && (
-            <button className="chip active" onClick={() => setSelectedDate('')}>
-              {new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              <X size={14} />
-            </button>
-          )}
+          <div className="quick-picks">
+            <button className="quick-pick" onClick={applyThisWeek}>This Week</button>
+            <span className="quick-pick-dot">·</span>
+            <button className="quick-pick" onClick={applyThisMonth}>This Month</button>
+            <span className="quick-pick-dot">·</span>
+            <button className="quick-pick" onClick={() => applyQuickPick(30)}>Last 30 Days</button>
+            <span className="quick-pick-dot">·</span>
+            <button className="quick-pick" onClick={() => applyQuickPick(90)}>Last 90 Days</button>
+          </div>
         </div>
       )}
 
@@ -122,11 +196,11 @@ export default function LogOutfit() {
       ) : filteredOutfits.length === 0 ? (
         <div className="empty-state">
           <Calendar size={64} />
-          {selectedDate ? (
+          {hasFilter ? (
             <>
-              <h3>No outfits on this date</h3>
-              <p>Try a different date or view all outfits</p>
-              <button className="btn btn-primary" onClick={() => setSelectedDate('')}>
+              <h3>No outfits in this range</h3>
+              <p>Try different dates or view all outfits</p>
+              <button className="btn btn-primary" onClick={clearFilter}>
                 View All
               </button>
             </>
