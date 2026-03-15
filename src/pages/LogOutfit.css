@@ -8,6 +8,19 @@
 
 .log-header .page-title { margin-bottom: 0; }
 
+.log-date-filters {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+
+.log-date-filters .chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .log-skeleton-list {
   display: flex;
   flex-direction: column;

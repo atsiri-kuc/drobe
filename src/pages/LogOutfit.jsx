@@ -6,25 +6,54 @@ import { Calendar, Plus, ShirtIcon, Clock } from 'lucide-react';
 import LogOutfitModal from '../components/LogOutfitModal';
 import './LogOutfit.css';
 
+const DATE_FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'today', label: 'Today' },
+  { key: 'week', label: 'This Week' },
+  { key: 'month', label: 'This Month' },
+];
+
+function getOutfitDate(outfit) {
+  return outfit.wornAt?.seconds
+    ? new Date(outfit.wornAt.seconds * 1000)
+    : new Date(outfit.wornAt);
+}
+
+function applyDateFilter(outfits, filterKey) {
+  if (filterKey === 'all') return outfits;
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let cutoff;
+  if (filterKey === 'today') {
+    cutoff = startOfToday;
+  } else if (filterKey === 'week') {
+    cutoff = new Date(startOfToday);
+    cutoff.setDate(cutoff.getDate() - 7);
+  } else if (filterKey === 'month') {
+    cutoff = new Date(startOfToday);
+    cutoff.setMonth(cutoff.getMonth() - 1);
+  }
+  return outfits.filter(o => getOutfitDate(o) >= cutoff);
+}
+
 export default function LogOutfit() {
   const { user } = useAuth();
   const [outfits, setOutfits] = useState([]);
   const [items, setItems] = useState({});
   const [loading, setLoading] = useState(true);
   const [showLogModal, setShowLogModal] = useState(false);
+  const [dateFilter, setDateFilter] = useState('all');
 
   useEffect(() => { if (user) loadData(); }, [user]);
 
   async function loadData() {
     try {
-      // Load outfits
       const outfitSnap = await getDocs(
         query(collection(db, 'users', user.uid, 'outfits'), orderBy('wornAt', 'desc'))
       );
       const outfitList = [];
       outfitSnap.forEach(d => outfitList.push({ id: d.id, ...d.data() }));
 
-      // Load items for reference
       const itemSnap = await getDocs(collection(db, 'users', user.uid, 'items'));
       const itemMap = {};
       itemSnap.forEach(d => { itemMap[d.id] = { id: d.id, ...d.data() }; });
@@ -38,13 +67,10 @@ export default function LogOutfit() {
     }
   }
 
-  // Group outfits by date
-  function groupByDate(outfits) {
+  function groupByDate(list) {
     const groups = {};
-    outfits.forEach(outfit => {
-      const d = outfit.wornAt?.seconds
-        ? new Date(outfit.wornAt.seconds * 1000)
-        : new Date(outfit.wornAt);
+    list.forEach(outfit => {
+      const d = getOutfitDate(outfit);
       const key = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
       if (!groups[key]) groups[key] = [];
       groups[key].push(outfit);
@@ -53,14 +79,16 @@ export default function LogOutfit() {
   }
 
   function getRelativeDate(dateStr) {
-    const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const fmt = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+    const today = new Date().toLocaleDateString('en-US', fmt);
+    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-US', fmt);
     if (dateStr === today) return 'Today';
     if (dateStr === yesterday) return 'Yesterday';
     return dateStr;
   }
 
-  const grouped = groupByDate(outfits);
+  const filteredOutfits = applyDateFilter(outfits, dateFilter);
+  const grouped = groupByDate(filteredOutfits);
 
   return (
     <div className="page">
@@ -71,20 +99,48 @@ export default function LogOutfit() {
         </button>
       </div>
 
+      {/* Date Filter Chips */}
+      {outfits.length > 0 && (
+        <div className="log-date-filters">
+          {DATE_FILTERS.map(f => {
+            const count = applyDateFilter(outfits, f.key).length;
+            return (
+              <button
+                key={f.key}
+                className={`chip ${dateFilter === f.key ? 'active' : ''}`}
+                onClick={() => setDateFilter(f.key)}
+              >
+                {f.label}
+                <span className="chip-count">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {loading ? (
         <div className="log-skeleton-list">
           {[1, 2, 3].map(i => (
             <div key={i} className="skeleton log-skeleton-item" />
           ))}
         </div>
-      ) : outfits.length === 0 ? (
+      ) : filteredOutfits.length === 0 ? (
         <div className="empty-state">
           <Calendar size={64} />
-          <h3>No outfits logged yet</h3>
-          <p>Start logging what you wear every day</p>
-          <button className="btn btn-primary" onClick={() => setShowLogModal(true)}>
-            <Plus size={18} /> Log Your First Outfit
-          </button>
+          {dateFilter === 'all' ? (
+            <>
+              <h3>No outfits logged yet</h3>
+              <p>Start logging what you wear every day</p>
+              <button className="btn btn-primary" onClick={() => setShowLogModal(true)}>
+                <Plus size={18} /> Log Your First Outfit
+              </button>
+            </>
+          ) : (
+            <>
+              <h3>No outfits in this period</h3>
+              <p>Try a different date range or log a new outfit</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="log-timeline">
