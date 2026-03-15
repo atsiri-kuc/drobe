@@ -7,8 +7,6 @@ import { getUtilization } from '../utils/utilization';
 import LogOutfitModal from '../components/LogOutfitModal';
 import './Home.css';
 
-const DISPLAY_CATEGORIES = ['Tops', 'Bottoms', 'Dresses', 'Outerwear', 'Shoes', 'Accessories'];
-
 const STYLE_TIPS = [
   "Dress how you want to be addressed.",
   "The best outfit is the one you feel confident in.",
@@ -111,7 +109,7 @@ export default function Home() {
   }, [items, outfits]);
 
   const firstName = user?.displayName?.split(' ')[0] || 'there';
-  const activeCategories = DISPLAY_CATEGORIES.filter(c => topByCategory[c]);
+  const activeCategories = Object.keys(topByCategory);
 
   return (
     <div className="page home-page">

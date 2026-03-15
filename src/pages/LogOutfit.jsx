@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { useState, useMemo } from 'react';
+import { doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
-import { Calendar, Plus, ShirtIcon, Clock, X } from 'lucide-react';
+import { useData } from '../context/DataContext';
+import { Calendar, Plus, ShirtIcon, Clock, X, Trash2 } from 'lucide-react';
 import LogOutfitModal from '../components/LogOutfitModal';
 import './LogOutfit.css';
 
@@ -23,35 +24,29 @@ function formatShort(dateStr) {
 
 export default function LogOutfit() {
   const { user } = useAuth();
-  const [outfits, setOutfits] = useState([]);
-  const [items, setItems] = useState({});
-  const [loading, setLoading] = useState(true);
+  const { items: allItems, outfits, loading, refresh } = useData();
   const [showLogModal, setShowLogModal] = useState(false);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
-  useEffect(() => { if (user) loadData(); }, [user]);
+  // Build item lookup map from shared data
+  const items = useMemo(() => {
+    const map = {};
+    allItems.forEach(i => { map[i.id] = i; });
+    return map;
+  }, [allItems]);
 
-  async function loadData() {
+  async function handleDeleteOutfit(outfitId) {
+    if (!window.confirm('Delete this outfit log?')) return;
     try {
-      const outfitSnap = await getDocs(
-        query(collection(db, 'users', user.uid, 'outfits'), orderBy('wornAt', 'desc'))
-      );
-      const outfitList = [];
-      outfitSnap.forEach(d => outfitList.push({ id: d.id, ...d.data() }));
-
-      const itemSnap = await getDocs(collection(db, 'users', user.uid, 'items'));
-      const itemMap = {};
-      itemSnap.forEach(d => { itemMap[d.id] = { id: d.id, ...d.data() }; });
-
-      setOutfits(outfitList);
-      setItems(itemMap);
+      await deleteDoc(doc(db, 'users', user.uid, 'outfits', outfitId));
+      refresh();
     } catch (err) {
-      console.error('Error loading outfits:', err);
-    } finally {
-      setLoading(false);
+      console.error('Error deleting outfit:', err);
     }
   }
+
+
 
   const hasFilter = fromDate || toDate;
 
@@ -246,9 +241,18 @@ export default function LogOutfit() {
                       );
                     })}
                   </div>
-                  <div className="log-outfit-time">
-                    <Clock size={12} />
-                    <span>{outfit.itemIds?.length || 0} items</span>
+                  <div className="log-outfit-footer">
+                    <div className="log-outfit-time">
+                      <Clock size={12} />
+                      <span>{outfit.itemIds?.length || 0} items</span>
+                    </div>
+                    <button
+                      className="btn-icon-sm btn-icon-danger"
+                      onClick={() => handleDeleteOutfit(outfit.id)}
+                      aria-label="Delete outfit"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -262,7 +266,6 @@ export default function LogOutfit() {
           onClose={() => setShowLogModal(false)}
           onComplete={() => {
             setShowLogModal(false);
-            loadData();
           }}
         />
       )}

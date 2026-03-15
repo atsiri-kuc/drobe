@@ -163,9 +163,14 @@ export default function ItemDetail() {
           <ArrowLeft size={20} /> Back
         </button>
         {!editing ? (
-          <button className="btn btn-secondary btn-sm" onClick={() => setEditing(true)}>
-            <Pencil size={14} /> Edit
-          </button>
+          <div className="edit-actions">
+            <button className="btn btn-secondary btn-sm" onClick={() => setEditing(true)}>
+              <Pencil size={14} /> Edit
+            </button>
+            <button className="btn btn-danger btn-sm" onClick={handleDelete}>
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
         ) : (
           <div className="edit-actions">
             <button className="btn btn-secondary btn-sm" onClick={() => setEditing(false)} disabled={saving}>
@@ -375,10 +380,6 @@ export default function ItemDetail() {
           )}
         </>
       )}
-
-      <button className="btn btn-danger btn-full detail-delete" onClick={handleDelete}>
-        <Trash2 size={16} /> Delete Item
-      </button>
     </div>
   );
 }

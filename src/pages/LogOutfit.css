@@ -200,11 +200,17 @@
   width: 64px;
 }
 
+.log-outfit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-1);
+}
+
 .log-outfit-time {
   display: flex;
   align-items: center;
   gap: 4px;
   font-size: var(--fs-xs);
   color: var(--color-text-tertiary);
-  margin-top: var(--space-1);
 }

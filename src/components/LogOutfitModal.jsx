@@ -49,7 +49,7 @@ export default function LogOutfitModal({ onClose, onComplete }) {
     try {
       const batch = writeBatch(db);
       const outfitRef = doc(collection(db, 'users', user.uid, 'outfits'));
-      const wornAt = Timestamp.fromDate(new Date(date));
+      const wornAt = Timestamp.fromDate(new Date(date + 'T12:00:00'));
 
       batch.set(outfitRef, {
         itemIds: Array.from(selected),
