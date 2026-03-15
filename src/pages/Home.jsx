@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { ShirtIcon, TrendingUp, Calendar, Plus, Flame, Sparkles, RefreshCw, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getUtilization } from '../utils/utilization';
@@ -50,96 +49,66 @@ function formatToday() {
 
 export default function Home() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({ totalItems: 0, totalOutfits: 0 });
-  const [topByCategory, setTopByCategory] = useState({});
-  const [streak, setStreak] = useState(0);
-  const [wearAgain, setWearAgain] = useState(null);
-  const [donateCount, setDonateCount] = useState(0);
-  const [donateValue, setDonateValue] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const { items, outfits, loading } = useData();
   const [showLogModal, setShowLogModal] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    loadDashboard();
-  }, [user]);
-
-  async function loadDashboard() {
-    try {
-      const [itemsSnap, outfitsSnap] = await Promise.all([
-        getDocs(collection(db, 'users', user.uid, 'items')),
-        getDocs(query(
-          collection(db, 'users', user.uid, 'outfits'),
-          orderBy('wornAt', 'desc'),
-          limit(30)
-        ))
-      ]);
-
-      const items = [];
-      itemsSnap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
-
-      const outfits = [];
-      outfitsSnap.forEach(doc => outfits.push({ id: doc.id, ...doc.data() }));
-
-      // Category top items
-      const categoryMap = {};
-      items.forEach(item => {
-        const cat = item.category || 'Other';
-        if (!categoryMap[cat]) categoryMap[cat] = [];
-        categoryMap[cat].push(item);
-      });
-      const topItems = {};
-      for (const [cat, catItems] of Object.entries(categoryMap)) {
-        catItems.sort((a, b) => (b.totalWears || 0) - (a.totalWears || 0));
-        if (catItems[0]) topItems[cat] = catItems[0];
-      }
-
-      // Calculate streak
-      let currentStreak = 0;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      for (let i = 0; i < 30; i++) {
-        const checkDate = new Date(today);
-        checkDate.setDate(checkDate.getDate() - i);
-        const dateStr = checkDate.toDateString();
-        const hasOutfit = outfits.some(o => {
-          const d = o.wornAt?.seconds ? new Date(o.wornAt.seconds * 1000) : new Date(o.wornAt);
-          return d.toDateString() === dateStr;
-        });
-        if (hasOutfit) {
-          currentStreak++;
-        } else {
-          break;
-        }
-      }
-
-      // Find item to wear again (not worn in longest time, has been worn at least once)
-      const wornItems = items
-        .filter(i => (i.totalWears || 0) > 0 && i.lastWornAt)
-        .sort((a, b) => {
-          const aTime = a.lastWornAt?.seconds || 0;
-          const bTime = b.lastWornAt?.seconds || 0;
-          return aTime - bTime; // oldest last worn first
-        });
-      const suggestion = wornItems[0] || null;
-
-      setStats({ totalItems: items.length, totalOutfits: outfits.length });
-      setTopByCategory(topItems);
-      setStreak(currentStreak);
-      setWearAgain(suggestion);
-
-      // Calculate donate nudge
-      const lowUtil = items
-        .map(item => ({ ...item, util: getUtilization(item) }))
-        .filter(item => item.util.level === 'LOW');
-      setDonateCount(lowUtil.length);
-      setDonateValue(lowUtil.reduce((s, i) => s + (i.purchasePrice || 0), 0));
-    } catch (err) {
-      console.error('Error loading dashboard:', err);
-    } finally {
-      setLoading(false);
+  const { topByCategory, streak, wearAgain, donateCount, donateValue, stats } = useMemo(() => {
+    // Category top items
+    const categoryMap = {};
+    items.forEach(item => {
+      const cat = item.category || 'Other';
+      if (!categoryMap[cat]) categoryMap[cat] = [];
+      categoryMap[cat].push(item);
+    });
+    const topItems = {};
+    for (const [cat, catItems] of Object.entries(categoryMap)) {
+      catItems.sort((a, b) => (b.totalWears || 0) - (a.totalWears || 0));
+      if (catItems[0]) topItems[cat] = catItems[0];
     }
-  }
+
+    // Calculate streak
+    let currentStreak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 30; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(checkDate.getDate() - i);
+      const dateStr = checkDate.toDateString();
+      const hasOutfit = outfits.some(o => {
+        const d = o.wornAt?.seconds ? new Date(o.wornAt.seconds * 1000) : new Date(o.wornAt);
+        return d.toDateString() === dateStr;
+      });
+      if (hasOutfit) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+
+    // Find item to wear again
+    const wornItems = items
+      .filter(i => (i.totalWears || 0) > 0 && i.lastWornAt)
+      .sort((a, b) => {
+        const aTime = a.lastWornAt?.seconds || 0;
+        const bTime = b.lastWornAt?.seconds || 0;
+        return aTime - bTime;
+      });
+    const suggestion = wornItems[0] || null;
+
+    // Calculate donate nudge
+    const lowUtil = items
+      .map(item => ({ ...item, util: getUtilization(item) }))
+      .filter(item => item.util.level === 'LOW');
+
+    return {
+      topByCategory: topItems,
+      streak: currentStreak,
+      wearAgain: suggestion,
+      donateCount: lowUtil.length,
+      donateValue: lowUtil.reduce((s, i) => s + (i.purchasePrice || 0), 0),
+      stats: { totalItems: items.length, totalOutfits: outfits.length },
+    };
+  }, [items, outfits]);
 
   const firstName = user?.displayName?.split(' ')[0] || 'there';
   const activeCategories = DISPLAY_CATEGORIES.filter(c => topByCategory[c]);

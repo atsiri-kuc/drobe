@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { DollarSign, TrendingUp, ShirtIcon, AlertCircle, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ViewToggle from '../components/ViewToggle';
@@ -94,33 +94,10 @@ function DonutChart({ data, total }) {
 
 export default function Stats() {
   const { user } = useAuth();
-  const [items, setItems] = useState([]);
-  const [outfits, setOutfits] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { items, outfits, loading } = useData();
 
   const [viewMonth, setViewMonth] = useState(null);
   const [statsView, setStatsView] = useState('list');
-
-  useEffect(() => { if (user) loadData(); }, [user]);
-
-  async function loadData() {
-    try {
-      const [itemsSnap, outfitsSnap] = await Promise.all([
-        getDocs(collection(db, 'users', user.uid, 'items')),
-        getDocs(query(collection(db, 'users', user.uid, 'outfits'), orderBy('wornAt', 'desc'))),
-      ]);
-      const itemList = [];
-      itemsSnap.forEach(d => itemList.push({ id: d.id, ...d.data() }));
-      const outfitList = [];
-      outfitsSnap.forEach(d => outfitList.push({ id: d.id, ...d.data() }));
-      setItems(itemList);
-      setOutfits(outfitList);
-    } catch (err) {
-      console.error('Error loading stats:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   // Period navigation
   function goToPrevMonth() {

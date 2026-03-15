@@ -3,7 +3,9 @@ import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { scanMultipleItems } from '../utils/geminiVision';
+import { compressImage } from '../utils/imageCompression';
 import { Camera, Upload, X, Check, Loader, Pencil, Sparkles, AlertCircle } from 'lucide-react';
 import './BulkUpload.css';
 
@@ -11,6 +13,7 @@ const CATEGORIES = ['Tops', 'Bottoms', 'Shoes', 'Outerwear', 'Accessories', 'Dre
 
 export default function BulkUpload({ onClose, onComplete }) {
   const { user } = useAuth();
+  const { refresh } = useData();
   const fileInputRef = useRef(null);
   const [step, setStep] = useState('select'); // select | scanning | review | saving
   const [files, setFiles] = useState([]);
@@ -85,9 +88,10 @@ export default function BulkUpload({ onClose, onComplete }) {
         // Upload photo
         let photoURL = '';
         if (item.file) {
+          const compressed = await compressImage(item.file);
           const path = `users/${user.uid}/items/${Date.now()}_${item.file.name}`;
           const storageRef = ref(storage, path);
-          await uploadBytes(storageRef, item.file);
+          await uploadBytes(storageRef, compressed);
           photoURL = await getDownloadURL(storageRef);
         }
 
@@ -115,6 +119,7 @@ export default function BulkUpload({ onClose, onComplete }) {
       }
     }
 
+    refresh();
     onComplete?.();
   }
 

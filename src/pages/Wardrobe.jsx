@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { Plus, Search, Filter, ShirtIcon, Camera, X, Sparkles } from 'lucide-react';
 import ViewToggle from '../components/ViewToggle';
 import { Link } from 'react-router-dom';
 import { SEASONS, SEASON_EMOJI } from '../utils/utilization';
+import { compressImage } from '../utils/imageCompression';
 import BulkUpload from '../components/BulkUpload';
 import './Wardrobe.css';
 
@@ -24,9 +26,8 @@ const CATEGORY_ICONS = {
 
 export default function Wardrobe() {
   const { user } = useAuth();
-  const [items, setItems] = useState([]);
+  const { items, loading, refresh } = useData();
   const [filtered, setFiltered] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -39,8 +40,6 @@ export default function Wardrobe() {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
-
-  useEffect(() => { if (user) loadItems(); }, [user]);
 
   useEffect(() => {
     let result = items;
@@ -57,20 +56,6 @@ export default function Wardrobe() {
     }
     setFiltered(result);
   }, [items, activeCategory, search]);
-
-  async function loadItems() {
-    try {
-      const snap = await getDocs(collection(db, 'users', user.uid, 'items'));
-      const list = [];
-      snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
-      list.sort((a, b) => (b.totalWears || 0) - (a.totalWears || 0));
-      setItems(list);
-    } catch (err) {
-      console.error('Error loading items:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   function handlePhotoChange(e) {
     const file = e.target.files[0];
@@ -89,9 +74,10 @@ export default function Wardrobe() {
     try {
       let photoURL = '';
       if (photoFile) {
+        const compressed = await compressImage(photoFile);
         const path = `users/${user.uid}/items/${Date.now()}_${photoFile.name}`;
         const storageRef = ref(storage, path);
-        await uploadBytes(storageRef, photoFile);
+        await uploadBytes(storageRef, compressed);
         photoURL = await getDownloadURL(storageRef);
       }
 
@@ -112,7 +98,7 @@ export default function Wardrobe() {
       setPhotoFile(null);
       setPhotoPreview(null);
       setShowAddForm(false);
-      loadItems();
+      refresh();
     } catch (err) {
       console.error('Error adding item:', err);
     } finally {

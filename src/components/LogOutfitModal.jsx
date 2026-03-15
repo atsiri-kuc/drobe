@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, addDoc, Timestamp, query, orderBy, where, writeBatch, doc, increment } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, writeBatch, doc, increment } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { ShirtIcon, Calendar, X, Check, Search } from 'lucide-react';
 import './LogOutfitModal.css';
 
@@ -9,7 +10,7 @@ const CATEGORIES = ['All', 'Tops', 'Bottoms', 'Dresses', 'Shoes', 'Outerwear', '
 
 export default function LogOutfitModal({ onClose, onComplete }) {
   const { user } = useAuth();
-  const [items, setItems] = useState([]);
+  const { items: allItems, loading, refresh } = useData();
   const [filtered, setFiltered] = useState([]);
   const [selected, setSelected] = useState(new Set());
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -17,12 +18,9 @@ export default function LogOutfitModal({ onClose, onComplete }) {
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => { if (user) loadItems(); }, [user]);
 
   useEffect(() => {
-    let result = items;
+    let result = allItems;
     if (activeCategory !== 'All') {
       result = result.filter(i => i.category === activeCategory);
     }
@@ -34,20 +32,7 @@ export default function LogOutfitModal({ onClose, onComplete }) {
       );
     }
     setFiltered(result);
-  }, [items, activeCategory, search]);
-
-  async function loadItems() {
-    try {
-      const snap = await getDocs(collection(db, 'users', user.uid, 'items'));
-      const list = [];
-      snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-      setItems(list);
-    } catch (err) {
-      console.error('Error loading items:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [allItems, activeCategory, search]);
 
   function toggleItem(id) {
     setSelected(prev => {
@@ -91,6 +76,7 @@ export default function LogOutfitModal({ onClose, onComplete }) {
       }
 
       await batch.commit();
+      refresh();
       onComplete?.();
     } catch (err) {
       console.error('Error saving outfit:', err);

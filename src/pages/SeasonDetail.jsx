@@ -1,8 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebase/config';
-import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { ChevronLeft, ShirtIcon, Calendar } from 'lucide-react';
 import ViewToggle from '../components/ViewToggle';
 import { SEASON_EMOJI } from '../utils/utilization';
@@ -26,35 +24,11 @@ function getOutfitDate(outfit) {
 export default function SeasonDetail() {
   const { season } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [items, setItems] = useState([]);
-  const [outfits, setOutfits] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { items, outfits, loading } = useData();
   const [viewMode, setViewMode] = useState('list');
 
   const emoji = SEASON_EMOJI[season] || '📅';
   const months = SEASON_MONTHS[season] || [];
-
-  useEffect(() => { if (user) loadData(); }, [user]);
-
-  async function loadData() {
-    try {
-      const [itemsSnap, outfitsSnap] = await Promise.all([
-        getDocs(collection(db, 'users', user.uid, 'items')),
-        getDocs(query(collection(db, 'users', user.uid, 'outfits'), orderBy('wornAt', 'desc'))),
-      ]);
-      const itemList = [];
-      itemsSnap.forEach(d => itemList.push({ id: d.id, ...d.data() }));
-      const outfitList = [];
-      outfitsSnap.forEach(d => outfitList.push({ id: d.id, ...d.data() }));
-      setItems(itemList);
-      setOutfits(outfitList);
-    } catch (err) {
-      console.error('Error loading season data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   // Filter outfits to only this season's months
   const seasonOutfits = useMemo(() => {
