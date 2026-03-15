@@ -216,6 +216,46 @@
   padding-top: var(--space-8);
 }
 
+/* ── Smart Tips ── */
+.detail-tips {
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-left: 3px solid #C4A97D;
+}
+
+.tips-title {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  margin-bottom: var(--space-3);
+}
+
+.tips-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.tip-icon {
+  flex-shrink: 0;
+  font-size: var(--fs-base);
+}
+
+.tip-text {
+  flex: 1;
+}
+
 /* ── Season Chips ── */
 .season-chips {
   display: flex;

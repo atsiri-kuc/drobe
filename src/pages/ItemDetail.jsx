@@ -4,7 +4,7 @@ import { doc, getDoc, updateDoc, collection, query, where, getDocs, deleteDoc } 
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Calendar, TrendingUp, DollarSign, ShirtIcon, Trash2, Pencil, Check, X } from 'lucide-react';
-import { SEASONS, SEASON_EMOJI, getUtilization, isInSeason } from '../utils/utilization';
+import { SEASONS, SEASON_EMOJI, getUtilization, isInSeason, getSuggestions } from '../utils/utilization';
 import './ItemDetail.css';
 
 const CATEGORIES = ['Tops', 'Bottoms', 'Shoes', 'Outerwear', 'Accessories', 'Dresses', 'Activewear'];
@@ -314,6 +314,24 @@ export default function ItemDetail() {
               <span className="detail-stat-label">Cost per wear</span>
             </div>
           </div>
+
+          {/* Utilization Tips */}
+          {(() => {
+            const tips = getSuggestions(item);
+            return tips.length > 0 ? (
+              <div className="detail-tips card">
+                <h3 className="tips-title">💡 Smart Tips</h3>
+                <ul className="tips-list">
+                  {tips.map((tip, i) => (
+                    <li key={i} className={`tip-item tip-${tip.type}`}>
+                      <span className="tip-icon">{tip.icon}</span>
+                      <span className="tip-text">{tip.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null;
+          })()}
 
           {item.purchasePrice > 0 && (
             <div className="detail-price-info card">
