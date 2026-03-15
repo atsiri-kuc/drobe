@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
@@ -74,6 +74,26 @@ export default function LogOutfit() {
   function handleEditDay(dateKey) {
     setLogDate(dateKey);
     setShowLogModal(true);
+  }
+
+  async function handleRemoveItem(itemId, dayOutfits) {
+    try {
+      for (const outfit of dayOutfits) {
+        if (!(outfit.itemIds || []).includes(itemId)) continue;
+        const outfitRef = doc(db, 'users', user.uid, 'outfits', outfit.id);
+        if (outfit.itemIds.length <= 1) {
+          // Last item in this outfit — delete the whole outfit
+          await deleteDoc(outfitRef);
+        } else {
+          // Remove just this item from the outfit
+          await updateDoc(outfitRef, { itemIds: arrayRemove(itemId) });
+        }
+      }
+      refresh();
+    } catch (err) {
+      console.error('Error removing item:', err);
+      alert('Failed to remove item.');
+    }
   }
 
   const hasFilter = fromDate || toDate;
@@ -296,13 +316,22 @@ export default function LogOutfit() {
                 <div className="log-outfit-items">
                   {dayItems.map(item => (
                     <div key={item.id} className="log-outfit-item">
-                      {item.photoURL ? (
-                        <img src={item.photoURL} alt={item.name} className="log-outfit-item-img" loading="lazy" />
-                      ) : (
-                        <div className="log-outfit-item-placeholder">
-                          <ShirtIcon size={16} />
-                        </div>
-                      )}
+                      <div className="log-item-img-wrap">
+                        {item.photoURL ? (
+                          <img src={item.photoURL} alt={item.name} className="log-outfit-item-img" loading="lazy" />
+                        ) : (
+                          <div className="log-outfit-item-placeholder">
+                            <ShirtIcon size={16} />
+                          </div>
+                        )}
+                        <button
+                          className="log-item-remove"
+                          onClick={() => handleRemoveItem(item.id, dayOutfits)}
+                          aria-label={`Remove ${item.name}`}
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
                       <span className="log-outfit-item-name">{item.name}</span>
                     </div>
                   ))}
