@@ -1,11 +1,11 @@
 {
-  "name": "WearLog",
-  "short_name": "WearLog",
-  "description": "Track what you wear. Know what you own.",
+  "name": "Drobe",
+  "short_name": "Drobe",
+  "description": "Track what you wear. Donate what you don't.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f4f3f0",
-  "theme_color": "#5a8a6a",
+  "background_color": "#FFF4E2",
+  "theme_color": "#2D2D2D",
   "orientation": "portrait-primary",
   "icons": [
     {
