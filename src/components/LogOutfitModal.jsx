@@ -8,12 +8,12 @@ import './LogOutfitModal.css';
 
 const CATEGORIES = ['All', 'Tops', 'Bottoms', 'Dresses', 'Shoes', 'Outerwear', 'Accessories'];
 
-export default function LogOutfitModal({ onClose, onComplete }) {
+export default function LogOutfitModal({ onClose, onComplete, initialDate }) {
   const { user } = useAuth();
   const { items: allItems, loading, refresh } = useData();
   const [filtered, setFiltered] = useState([]);
   const [selected, setSelected] = useState(new Set());
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
   const [occasion, setOccasion] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');

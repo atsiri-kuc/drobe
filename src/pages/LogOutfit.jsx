@@ -46,6 +46,7 @@ export default function LogOutfit() {
   const { user } = useAuth();
   const { items: allItems, outfits, loading, refresh } = useData();
   const [showLogModal, setShowLogModal] = useState(false);
+  const [logDate, setLogDate] = useState(null); // pre-set date for the modal
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
@@ -56,13 +57,21 @@ export default function LogOutfit() {
     return map;
   }, [allItems]);
 
-  async function handleDeleteOutfit(outfitId) {
+  async function handleDeleteDay(outfitIds) {
+    if (!window.confirm('Delete this day\'s outfit log? This cannot be undone.')) return;
     try {
-      await deleteDoc(doc(db, 'users', user.uid, 'outfits', outfitId));
+      for (const id of outfitIds) {
+        await deleteDoc(doc(db, 'users', user.uid, 'outfits', id));
+      }
       refresh();
     } catch (err) {
       console.error('Error deleting outfit:', err);
     }
+  }
+
+  function handleEditDay(dateKey) {
+    setLogDate(dateKey);
+    setShowLogModal(true);
   }
 
   const hasFilter = fromDate || toDate;
@@ -250,10 +259,15 @@ export default function LogOutfit() {
                   </div>
                   <div className="log-day-actions">
                     <button
+                      className="log-action-btn"
+                      onClick={() => handleEditDay(dateKey)}
+                      title="Edit"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
                       className="log-action-btn log-delete-btn"
-                      onClick={() => {
-                        outfitIds.forEach(id => handleDeleteOutfit(id));
-                      }}
+                      onClick={() => handleDeleteDay(outfitIds)}
                       title="Delete"
                     >
                       <Trash2 size={15} />
@@ -298,9 +312,11 @@ export default function LogOutfit() {
 
       {showLogModal && (
         <LogOutfitModal
-          onClose={() => setShowLogModal(false)}
+          initialDate={logDate}
+          onClose={() => { setShowLogModal(false); setLogDate(null); }}
           onComplete={() => {
             setShowLogModal(false);
+            setLogDate(null);
           }}
         />
       )}
