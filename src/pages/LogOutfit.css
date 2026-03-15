@@ -131,24 +131,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-md);
-  border: none;
-  background: none;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
   cursor: pointer;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   transition: all var(--duration-fast);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.log-action-btn:hover {
+.log-action-btn:active {
+  transform: scale(0.92);
   background: var(--color-bg);
-  color: var(--color-text);
 }
 
-.log-delete-btn:hover {
-  background: hsl(0, 80%, 95%);
-  color: hsl(0, 65%, 48%);
+.log-delete-btn {
+  color: hsl(0, 55%, 50%);
+  border-color: hsl(0, 40%, 85%);
+  background: hsl(0, 60%, 97%);
+}
+
+.log-delete-btn:active {
+  background: hsl(0, 60%, 92%);
 }
 
 .log-day-occasions {
