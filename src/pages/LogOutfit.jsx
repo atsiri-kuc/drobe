@@ -14,7 +14,11 @@ function getOutfitDate(outfit) {
 }
 
 function toLocalDateKey(date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  // Use UTC components because Firestore stores dates at UTC midnight
+  // e.g. "March 15" is stored as 2026-03-15T00:00:00Z
+  // In EDT (UTC-4) this becomes March 14 20:00 local time
+  // We want the UTC date (March 15), not the local date (March 14)
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
 }
 
 function formatDateLabel(dateKey) {
