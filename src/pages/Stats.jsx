@@ -179,8 +179,10 @@ export default function Stats() {
     // ── Brand Breakdown ──
     const brandMap = {};
     activeItems.forEach(i => {
-      const brand = (i.brand || '').trim();
-      if (!brand) return;
+      const rawBrand = (i.brand || '').trim();
+      if (!rawBrand) return;
+      // Normalize: title-case key
+      const brand = rawBrand.charAt(0).toUpperCase() + rawBrand.slice(1).toLowerCase();
       if (!brandMap[brand]) brandMap[brand] = { wears: 0, items: 0 };
       brandMap[brand].wears += (i.totalWears || 0);
       brandMap[brand].items += 1;
