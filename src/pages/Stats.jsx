@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
-import { DollarSign, TrendingUp, ShirtIcon, AlertCircle, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { DollarSign, TrendingUp, ShirtIcon, AlertCircle, Heart, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getUtilization, SEASON_EMOJI, SEASONS } from '../utils/utilization';
 import './Stats.css';
@@ -45,25 +45,7 @@ function getOutfitDate(outfit) {
     : new Date(outfit.wornAt);
 }
 
-// ── Pure CSS Bar Chart ──
-function BarChart({ data }) {
-  if (!data || data.length === 0) return null;
-  const max = Math.max(...data.map(d => d.value), 1);
-  return (
-    <div className="bar-chart">
-      {data.map((d, i) => (
-        <div key={i} className="bar-col">
-          <div className="bar-wrapper">
-            <div className="bar-fill" style={{ height: `${(d.value / max) * 100}%` }}>
-              {d.value > 0 && <span className="bar-value">{d.value}</span>}
-            </div>
-          </div>
-          <span className="bar-label">{d.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
+
 
 // ── Donut Chart ──
 function DonutChart({ data, total }) {
@@ -117,6 +99,7 @@ export default function Stats() {
 
   // Time navigation: null = all time, Date = specific month
   const [viewMonth, setViewMonth] = useState(null);
+  const [selectedSeason, setSelectedSeason] = useState(null);
 
   useEffect(() => { if (user) loadData(); }, [user]);
 
@@ -278,16 +261,18 @@ export default function Stats() {
     const seasonData = SEASONS.map(season => {
       const monthSet = new Set(SEASON_MONTHS[season]);
       let seasonWears = 0;
+      const seasonWornIds = new Set();
       filteredOutfits.forEach(o => {
         const d = getOutfitDate(o);
         if (monthSet.has(d.getMonth())) {
           seasonWears += (o.itemIds || []).length;
+          (o.itemIds || []).forEach(id => seasonWornIds.add(id));
         }
       });
       const seasonItems = scopedItems.filter(i =>
         !i.seasons || i.seasons.length === 0 || i.seasons.includes(season)
       );
-      return { season, emoji: SEASON_EMOJI[season], items: seasonItems.length, wears: seasonWears };
+      return { season, emoji: SEASON_EMOJI[season], items: seasonItems.length, wears: seasonWears, wornItemIds: [...seasonWornIds] };
     });
 
     // Cost insights
@@ -308,23 +293,20 @@ export default function Stats() {
     };
   }, [items, filteredOutfits, viewMonth, wornItemIds]);
 
-  // ── Bar chart data: daily breakdown for the selected month ──
-  const barData = useMemo(() => {
-    if (!viewMonth || filteredOutfits.length === 0) return null;
-    const year = viewMonth.getFullYear();
-    const month = viewMonth.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    const data = [];
-    for (let day = 1; day <= daysInMonth; day++) {
-      const count = filteredOutfits.filter(o => {
-        const d = getOutfitDate(o);
-        return d.getDate() === day;
-      }).length;
-      data.push({ label: day % 5 === 0 || day === 1 ? String(day) : '', value: count });
-    }
-    return data;
-  }, [filteredOutfits, viewMonth]);
+  // ── Season detail: items worn in selected season ──
+  const seasonDetailItems = useMemo(() => {
+    if (!selectedSeason || !stats) return [];
+    const sd = stats.seasonData.find(s => s.season === selectedSeason);
+    if (!sd) return [];
+    return sd.wornItemIds
+      .map(id => itemMap[id])
+      .filter(Boolean)
+      .map(item => ({
+        ...item,
+        periodWears: stats.wearCountInPeriod[item.id] || item.totalWears || 0,
+      }))
+      .sort((a, b) => b.periodWears - a.periodWears);
+  }, [selectedSeason, stats, itemMap]);
 
   if (loading) {
     return (
@@ -401,15 +383,7 @@ export default function Stats() {
         </div>
       </div>
 
-      {/* ── Daily Activity Chart (month view only) ── */}
-      {viewMonth && barData && barData.some(d => d.value > 0) && (
-        <div className="stats-section">
-          <h3 className="section-title">📊 Daily Activity</h3>
-          <div className="card chart-card">
-            <BarChart data={barData} />
-          </div>
-        </div>
-      )}
+
 
       {/* ── Category Breakdown ── */}
       {stats.categoryData.length > 0 && (
@@ -476,13 +450,18 @@ export default function Stats() {
         <h3 className="section-title">🌡️ Seasonal Summary</h3>
         <div className="season-grid">
           {stats.seasonData.map(s => (
-            <div key={s.season} className="card season-card">
+            <div
+              key={s.season}
+              className={`card season-card ${s.wears > 0 ? 'season-card-clickable' : ''}`}
+              onClick={() => s.wears > 0 && setSelectedSeason(s.season)}
+            >
               <span className="season-emoji-lg">{s.emoji}</span>
               <span className="season-name">{s.season}</span>
               <div className="season-stats">
                 <span>{s.wears} wears</span>
                 <span>{s.items} items</span>
               </div>
+              {s.wears > 0 && <span className="season-tap">Tap to see items →</span>}
             </div>
           ))}
         </div>
@@ -642,6 +621,51 @@ export default function Stats() {
           <p>Go back to a month with activity, or switch to All Time</p>
         </div>
       )}
+
+      {/* ── Season Detail Modal ── */}
+      {selectedSeason && (() => {
+        const sd = stats.seasonData.find(s => s.season === selectedSeason);
+        return (
+          <div className="modal-backdrop" onClick={() => setSelectedSeason(null)}>
+            <div className="modal season-modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>{sd?.emoji} {selectedSeason} — Items Worn</h2>
+                <button className="btn-icon" onClick={() => setSelectedSeason(null)}>
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="modal-body">
+                {seasonDetailItems.length === 0 ? (
+                  <p className="section-subtitle">No items worn in this season yet.</p>
+                ) : (
+                  <div className="stats-list">
+                    {seasonDetailItems.map((item, i) => (
+                      <Link
+                        key={item.id}
+                        to={`/wardrobe/${item.id}`}
+                        className="card stats-list-item"
+                        onClick={() => setSelectedSeason(null)}
+                      >
+                        <span className="stats-rank">{i + 1}</span>
+                        {item.photoURL ? (
+                          <img src={item.photoURL} alt={item.name} className="stats-item-img" />
+                        ) : (
+                          <div className="stats-item-placeholder"><ShirtIcon size={16} /></div>
+                        )}
+                        <div className="stats-item-info">
+                          <span className="stats-item-name">{item.name}</span>
+                          <span className="stats-item-meta">{item.category}{item.brand ? ` · ${item.brand}` : ''}</span>
+                        </div>
+                        <span className="badge badge-primary">{item.periodWears} wears</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

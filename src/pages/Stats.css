@@ -372,6 +372,33 @@
   color: var(--color-text-secondary);
 }
 
+.season-card-clickable {
+  cursor: pointer;
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.season-card-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.season-card-clickable:active {
+  transform: scale(0.97);
+}
+
+.season-tap {
+  font-size: 10px;
+  color: var(--color-primary);
+  font-weight: 500;
+  margin-top: var(--space-1);
+}
+
+/* Season Modal */
+.season-modal {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
 /* ── Cost Insights ── */
 .cost-card {
   padding: var(--space-4);
