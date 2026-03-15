@@ -150,7 +150,7 @@ export default function Home() {
       <div className="hero-card">
         <div className="hero-top">
           <div className="hero-brand">
-            <span className="hero-logo">D</span>
+            <span className="hero-logo"><ShirtIcon size={20} /></span>
             <span className="hero-app-name">Drobe</span>
           </div>
           {user?.photoURL && (
