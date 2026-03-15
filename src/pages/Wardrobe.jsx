@@ -3,7 +3,8 @@ import { collection, getDocs, addDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Search, Filter, ShirtIcon, Camera, X, Sparkles, LayoutGrid } from 'lucide-react';
+import { Plus, Search, Filter, ShirtIcon, Camera, X, Sparkles } from 'lucide-react';
+import ViewToggle from '../components/ViewToggle';
 import { Link } from 'react-router-dom';
 import { SEASONS, SEASON_EMOJI } from '../utils/utilization';
 import BulkUpload from '../components/BulkUpload';
@@ -37,6 +38,7 @@ export default function Wardrobe() {
   });
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [viewMode, setViewMode] = useState('grid');
 
   useEffect(() => { if (user) loadItems(); }, [user]);
 
@@ -131,6 +133,7 @@ export default function Wardrobe() {
             <Plus size={18} />
             Add Item
           </button>
+          <ViewToggle view={viewMode} onChange={setViewMode} />
         </div>
       </div>
 
@@ -165,7 +168,7 @@ export default function Wardrobe() {
       </div>
 
       {loading ? (
-        <div className="item-grid">
+        <div className={viewMode === 'grid' ? 'item-grid' : 'item-list'}>
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="skeleton item-skeleton" />
           ))}
@@ -177,7 +180,7 @@ export default function Wardrobe() {
           <p>{items.length === 0 ? 'Add your first clothing item to get started' : 'Try adjusting your search or filter'}</p>
         </div>
       ) : (
-        <div className="item-grid">
+        <div className={viewMode === 'grid' ? 'item-grid' : 'item-list'}>
           {filtered.map((item, i) => (
             <Link
               to={`/wardrobe/${item.id}`}

@@ -4,6 +4,7 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { ChevronLeft, ShirtIcon, Calendar } from 'lucide-react';
+import ViewToggle from '../components/ViewToggle';
 import { SEASON_EMOJI } from '../utils/utilization';
 import './SeasonDetail.css';
 
@@ -29,6 +30,7 @@ export default function SeasonDetail() {
   const [items, setItems] = useState([]);
   const [outfits, setOutfits] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('list');
 
   const emoji = SEASON_EMOJI[season] || '📅';
   const months = SEASON_MONTHS[season] || [];
@@ -106,6 +108,7 @@ export default function SeasonDetail() {
           <span className="season-detail-emoji">{emoji}</span>
           <h1>{season}</h1>
         </div>
+        <ViewToggle view={viewMode} onChange={setViewMode} />
       </div>
 
       {/* Summary Stats */}
@@ -144,7 +147,7 @@ export default function SeasonDetail() {
           {categorized.map(([category, catItems]) => (
             <div key={category} className="season-cat-group">
               <h3 className="season-cat-title">{category} <span className="season-cat-count">({catItems.length})</span></h3>
-              <div className="stats-list">
+              <div className={viewMode === 'grid' ? 'stats-grid' : 'stats-list'}>
                 {catItems.map((item, i) => (
                   <Link key={item.id} to={`/wardrobe/${item.id}`} className="card stats-list-item">
                     <span className="stats-rank">{i + 1}</span>

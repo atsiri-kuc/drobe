@@ -4,6 +4,7 @@ import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { DollarSign, TrendingUp, ShirtIcon, AlertCircle, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import ViewToggle from '../components/ViewToggle';
 import { getUtilization, SEASON_EMOJI, SEASONS } from '../utils/utilization';
 import './Stats.css';
 
@@ -97,8 +98,8 @@ export default function Stats() {
   const [outfits, setOutfits] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Time navigation: null = all time, Date = specific month
   const [viewMonth, setViewMonth] = useState(null);
+  const [statsView, setStatsView] = useState('list');
 
   useEffect(() => { if (user) loadData(); }, [user]);
 
@@ -320,7 +321,10 @@ export default function Stats() {
 
   return (
     <div className="page stats-page">
-      <h1 className="page-title" style={{ paddingTop: 'var(--space-4)' }}>Stats</h1>
+      <div className="stats-page-header">
+        <h1 className="page-title" style={{ paddingTop: 'var(--space-4)', marginBottom: 0 }}>Stats</h1>
+        <ViewToggle view={statsView} onChange={setStatsView} />
+      </div>
 
       {/* ── Time Period Navigator ── */}
       <div className="period-nav">
@@ -491,7 +495,7 @@ export default function Stats() {
       {stats.topWorn.length > 0 && (
         <div className="stats-section">
           <h3 className="section-title">🏆 Most Worn{viewMonth ? ' This Month' : ''}</h3>
-          <div className="stats-list">
+          <div className={statsView === 'grid' ? 'stats-grid' : 'stats-list'}>
             {stats.topWorn.map((item, i) => (
               <Link key={item.id} to={`/wardrobe/${item.id}`} className="card stats-list-item">
                 <span className="stats-rank">{i + 1}</span>
@@ -515,7 +519,7 @@ export default function Stats() {
       {stats.bestValue.length > 0 && (
         <div className="stats-section">
           <h3 className="section-title">💎 Best Value{viewMonth ? ' This Month' : ''}</h3>
-          <div className="stats-list">
+          <div className={statsView === 'grid' ? 'stats-grid' : 'stats-list'}>
             {stats.bestValue.map((item, i) => (
               <Link key={item.id} to={`/wardrobe/${item.id}`} className="card stats-list-item">
                 <span className="stats-rank">{i + 1}</span>
@@ -544,7 +548,7 @@ export default function Stats() {
               <span className="badge badge-warning">${stats.neverWornValue.toFixed(0)} idle</span>
             )}
           </h3>
-          <div className="stats-list">
+          <div className={statsView === 'grid' ? 'stats-grid' : 'stats-list'}>
             {stats.neverWorn.map(item => (
               <Link key={item.id} to={`/wardrobe/${item.id}`} className="card stats-list-item">
                 <AlertCircle size={16} className="never-worn-icon" />

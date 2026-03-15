@@ -2,6 +2,13 @@
   padding-bottom: calc(80px + var(--space-8));
 }
 
+.stats-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
 /* ── Time Period Navigator ── */
 .period-nav {
   display: flex;
