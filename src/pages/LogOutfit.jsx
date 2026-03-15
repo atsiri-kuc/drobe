@@ -46,7 +46,8 @@ export default function LogOutfit() {
   const { user } = useAuth();
   const { items: allItems, outfits, loading, refresh } = useData();
   const [showLogModal, setShowLogModal] = useState(false);
-  const [logDate, setLogDate] = useState(null); // pre-set date for the modal
+  const [logDate, setLogDate] = useState(null);
+  const [confirmDeleteKey, setConfirmDeleteKey] = useState(null); // dateKey of day being confirmed
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
@@ -58,14 +59,15 @@ export default function LogOutfit() {
   }, [allItems]);
 
   async function handleDeleteDay(outfitIds) {
-    if (!window.confirm('Delete this day\'s outfit log? This cannot be undone.')) return;
     try {
       for (const id of outfitIds) {
         await deleteDoc(doc(db, 'users', user.uid, 'outfits', id));
       }
+      setConfirmDeleteKey(null);
       refresh();
     } catch (err) {
       console.error('Error deleting outfit:', err);
+      alert('Failed to delete. Check your connection and try again.');
     }
   }
 
@@ -257,22 +259,30 @@ export default function LogOutfit() {
                     <Calendar size={16} />
                     <span className="log-day-label">{formatDateLabel(dateKey)}</span>
                   </div>
-                  <div className="log-day-actions">
-                    <button
-                      className="log-action-btn"
-                      onClick={() => handleEditDay(dateKey)}
-                      title="Edit"
-                    >
-                      <Pencil size={15} />
-                    </button>
-                    <button
-                      className="log-action-btn log-delete-btn"
-                      onClick={() => handleDeleteDay(outfitIds)}
-                      title="Delete"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
+                  {confirmDeleteKey === dateKey ? (
+                    <div className="log-confirm-bar">
+                      <span>Delete this day?</span>
+                      <button className="log-confirm-yes" onClick={() => handleDeleteDay(outfitIds)}>Yes</button>
+                      <button className="log-confirm-no" onClick={() => setConfirmDeleteKey(null)}>Cancel</button>
+                    </div>
+                  ) : (
+                    <div className="log-day-actions">
+                      <button
+                        className="log-action-btn"
+                        onClick={() => handleEditDay(dateKey)}
+                        title="Edit"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        className="log-action-btn log-delete-btn"
+                        onClick={() => setConfirmDeleteKey(dateKey)}
+                        title="Delete"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {occasions.length > 0 && (

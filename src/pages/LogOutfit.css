@@ -159,6 +159,44 @@
   background: hsl(0, 60%, 92%);
 }
 
+.log-confirm-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: hsl(0, 55%, 45%);
+  font-weight: 500;
+}
+
+.log-confirm-yes,
+.log-confirm-no {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 40px;
+}
+
+.log-confirm-yes {
+  background: hsl(0, 65%, 50%);
+  color: #fff;
+}
+
+.log-confirm-yes:active {
+  background: hsl(0, 65%, 40%);
+}
+
+.log-confirm-no {
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+}
+
+.log-confirm-no:active {
+  background: var(--color-border);
+}
+
 .log-day-occasions {
   display: flex;
   gap: var(--space-2);
