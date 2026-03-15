@@ -159,6 +159,16 @@
   background: hsl(0, 60%, 92%);
 }
 
+.log-done-btn {
+  color: hsl(142, 55%, 40%);
+  border-color: hsl(142, 40%, 80%);
+  background: hsl(142, 50%, 95%);
+}
+
+.log-done-btn:active {
+  background: hsl(142, 50%, 88%);
+}
+
 .log-confirm-bar {
   display: flex;
   align-items: center;

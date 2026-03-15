@@ -3,7 +3,7 @@ import { doc, deleteDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { Calendar, Plus, ShirtIcon, Clock, X, Trash2, Pencil } from 'lucide-react';
+import { Calendar, Plus, ShirtIcon, Clock, X, Trash2, Pencil, Check } from 'lucide-react';
 import LogOutfitModal from '../components/LogOutfitModal';
 import './LogOutfit.css';
 
@@ -47,7 +47,8 @@ export default function LogOutfit() {
   const { items: allItems, outfits, loading, refresh } = useData();
   const [showLogModal, setShowLogModal] = useState(false);
   const [logDate, setLogDate] = useState(null);
-  const [confirmDeleteKey, setConfirmDeleteKey] = useState(null); // dateKey of day being confirmed
+  const [editingKey, setEditingKey] = useState(null); // dateKey of day in edit mode
+  const [confirmDeleteKey, setConfirmDeleteKey] = useState(null);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
@@ -74,6 +75,11 @@ export default function LogOutfit() {
   function handleEditDay(dateKey) {
     setLogDate(dateKey);
     setShowLogModal(true);
+  }
+
+  function toggleEditMode(dateKey) {
+    setEditingKey(editingKey === dateKey ? null : dateKey);
+    setConfirmDeleteKey(null);
   }
 
   async function handleRemoveItem(itemId, dayOutfits) {
@@ -285,21 +291,38 @@ export default function LogOutfit() {
                       <button className="log-confirm-yes" onClick={() => handleDeleteDay(outfitIds)}>Yes</button>
                       <button className="log-confirm-no" onClick={() => setConfirmDeleteKey(null)}>Cancel</button>
                     </div>
-                  ) : (
+                  ) : editingKey === dateKey ? (
                     <div className="log-day-actions">
                       <button
                         className="log-action-btn"
                         onClick={() => handleEditDay(dateKey)}
-                        title="Edit"
+                        title="Add items"
                       >
-                        <Pencil size={15} />
+                        <Plus size={15} />
                       </button>
                       <button
                         className="log-action-btn log-delete-btn"
                         onClick={() => setConfirmDeleteKey(dateKey)}
-                        title="Delete"
+                        title="Delete day"
                       >
                         <Trash2 size={15} />
+                      </button>
+                      <button
+                        className="log-action-btn log-done-btn"
+                        onClick={() => toggleEditMode(dateKey)}
+                        title="Done"
+                      >
+                        <Check size={15} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="log-day-actions">
+                      <button
+                        className="log-action-btn"
+                        onClick={() => toggleEditMode(dateKey)}
+                        title="Edit"
+                      >
+                        <Pencil size={15} />
                       </button>
                     </div>
                   )}
@@ -324,13 +347,15 @@ export default function LogOutfit() {
                             <ShirtIcon size={16} />
                           </div>
                         )}
-                        <button
-                          className="log-item-remove"
-                          onClick={() => handleRemoveItem(item.id, dayOutfits)}
-                          aria-label={`Remove ${item.name}`}
-                        >
-                          <X size={12} />
-                        </button>
+                        {editingKey === dateKey && (
+                          <button
+                            className="log-item-remove"
+                            onClick={() => handleRemoveItem(item.id, dayOutfits)}
+                            aria-label={`Remove ${item.name}`}
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
                       </div>
                       <span className="log-outfit-item-name">{item.name}</span>
                     </div>
