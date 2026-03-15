@@ -1,0 +1,317 @@
+.bulk-modal {
+  max-height: 95dvh;
+}
+
+/* Step 1: Select */
+.bulk-select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.bulk-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-10) var(--space-4);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.bulk-dropzone:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.dropzone-title {
+  font-weight: 600;
+  font-size: var(--fs-base);
+  color: var(--color-text);
+}
+
+.dropzone-subtitle {
+  font-size: var(--fs-xs);
+}
+
+.bulk-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+}
+
+.bulk-preview-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border-light);
+}
+
+.bulk-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bulk-preview-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: hsla(0, 0%, 0%, 0.6);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.bulk-preview-add {
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--color-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  background: none;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.bulk-preview-add:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.bulk-scan-btn {
+  margin-top: var(--space-2);
+}
+
+/* Step 2: Scanning */
+.bulk-scanning {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-4);
+  text-align: center;
+}
+
+.scan-animation {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scan-sparkle {
+  color: var(--color-primary);
+  animation: sparkle-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes sparkle-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.7; }
+}
+
+.scan-status {
+  font-size: var(--fs-sm);
+  color: var(--color-text-secondary);
+}
+
+.scan-progress-bar {
+  width: 100%;
+  max-width: 280px;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.scan-progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.3s var(--ease-out);
+}
+
+.save-spinner {
+  color: var(--color-primary);
+  animation: spin 0.8s linear infinite;
+}
+
+/* Step 3: Review */
+.bulk-review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 75dvh;
+}
+
+.bulk-review-hint {
+  font-size: var(--fs-xs);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-primary-subtle);
+  border-radius: var(--radius-md);
+}
+
+.bulk-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow-y: auto;
+  flex: 1;
+  padding-bottom: 80px;
+}
+
+.bulk-review-item {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.review-item-img {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.review-item-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.review-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.review-item-name {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-item-actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.btn-icon-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.btn-icon-sm:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.btn-icon-danger:hover {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+}
+
+.review-item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.review-item-tags .badge {
+  background: var(--color-surface-hover);
+  color: var(--color-text-secondary);
+}
+
+.review-warning {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--color-warning);
+  margin-top: 2px;
+}
+
+/* Review Edit Form */
+.review-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.review-edit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.review-input {
+  padding: var(--space-2) var(--space-3);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  background: var(--color-surface);
+  color: var(--color-text);
+  min-height: 36px;
+}
+
+.review-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.btn-sm {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--fs-xs);
+  min-height: 32px;
+  align-self: flex-start;
+}
+
+/* Review Footer */
+.bulk-review-footer {
+  position: sticky;
+  bottom: 0;
+  padding: var(--space-4) 0;
+  background: var(--color-surface);
+}

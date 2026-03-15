@@ -1,0 +1,114 @@
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 2px solid var(--color-primary-light);
+}
+
+.profile-avatar-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-name {
+  font-weight: 600;
+  font-size: var(--fs-lg);
+}
+
+.profile-email {
+  font-size: var(--fs-sm);
+  color: var(--color-text-secondary);
+}
+
+.settings-section {
+  margin-bottom: var(--space-6);
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  cursor: pointer;
+  min-height: 56px;
+  margin-bottom: var(--space-2);
+  text-align: left;
+  font-size: var(--fs-base);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-light);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.settings-item:active {
+  transform: scale(0.98);
+}
+
+.settings-item-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.settings-danger {
+  color: var(--color-error);
+}
+
+.toggle {
+  width: 48px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  position: relative;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.toggle.active {
+  background: var(--color-primary);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: white;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-fast) var(--ease-spring);
+}
+
+.toggle.active .toggle-knob {
+  transform: translateX(20px);
+}
+
+.profile-footer {
+  text-align: center;
+  padding: var(--space-8) 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-xs);
+}
+
+.profile-footer p + p {
+  margin-top: var(--space-1);
+}

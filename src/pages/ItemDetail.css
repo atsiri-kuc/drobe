@@ -1,0 +1,281 @@
+.item-detail-page {
+  padding-bottom: calc(80px + var(--space-6));
+}
+
+.detail-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.detail-top-bar .btn-back {
+  margin-bottom: 0;
+}
+
+.edit-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  padding: var(--space-2) 0;
+  min-height: 44px;
+}
+
+.detail-hero-img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+}
+
+.detail-hero-placeholder {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: var(--color-primary-light);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  margin-bottom: var(--space-4);
+}
+
+/* Edit form */
+.detail-edit-form {
+  margin-bottom: var(--space-5);
+}
+
+.detail-edit-form .input-group {
+  margin-bottom: var(--space-3);
+}
+
+.detail-edit-form label {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+
+.detail-edit-form input,
+.detail-edit-form select {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--fs-sm);
+  min-height: 44px;
+}
+
+.detail-edit-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* View mode */
+.detail-header {
+  margin-bottom: var(--space-5);
+}
+
+.detail-name {
+  font-size: var(--fs-2xl);
+  margin-bottom: var(--space-2);
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.detail-summary {
+  font-size: var(--fs-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.detail-summary strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.detail-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.detail-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-4) var(--space-2);
+  gap: var(--space-1);
+}
+
+.detail-stat-icon {
+  color: var(--color-primary);
+  margin-bottom: var(--space-1);
+}
+
+.detail-stat-value {
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  color: var(--color-text);
+}
+
+.detail-stat-label {
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+}
+
+.detail-price-info {
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) 0;
+  font-size: var(--fs-sm);
+  color: var(--color-text-secondary);
+}
+
+.price-row + .price-row {
+  border-top: 1px solid var(--color-border-light);
+}
+
+.price-row strong {
+  color: var(--color-text);
+}
+
+.detail-history {
+  margin-bottom: var(--space-6);
+}
+
+.detail-history h3 {
+  font-size: var(--fs-base);
+  margin-bottom: var(--space-3);
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.history-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-light);
+}
+
+.btn-danger {
+  background: var(--color-error);
+  color: white;
+  border-color: var(--color-error);
+}
+
+.btn-danger:hover {
+  opacity: 0.9;
+}
+
+.detail-delete {
+  margin-top: var(--space-4);
+}
+
+.detail-skeleton {
+  padding-top: var(--space-8);
+}
+
+/* ── Season Chips ── */
+.season-chips {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.season-chip {
+  padding: var(--space-2) var(--space-3) !important;
+  font-size: var(--fs-xs) !important;
+  min-height: 36px !important;
+}
+
+/* ── Utilization Badge ── */
+.utilization-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+.util-high { background: #E8F0ED; color: #4A7C5C; }
+.util-medium { background: #F5EFDF; color: #96792E; }
+.util-low { background: #F8E8E8; color: #C04040; }
+.util-new { background: var(--color-primary-light); color: var(--color-text-tertiary); }
+
+.util-emoji { font-size: var(--fs-base); }
+.util-label { font-weight: 600; }
+.util-detail {
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+/* ── In-season / Off-season badge ──  */
+.badge-in-season {
+  background: #E8F0ED;
+  color: #4A7C5C;
+}
+
+.badge-off-season {
+  background: var(--color-primary-light);
+  color: var(--color-text-tertiary);
+}
+
+/* ── Season Tags ── */
+.season-tags {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.season-tag {
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+  padding: 2px 8px;
+  background: var(--color-primary-light);
+  border-radius: var(--radius-full);
+}

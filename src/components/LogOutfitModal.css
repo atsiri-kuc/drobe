@@ -1,0 +1,131 @@
+.log-modal {
+  max-height: 95dvh;
+}
+
+.log-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.log-date-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.log-date-input {
+  padding: var(--space-2) var(--space-3);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--fs-sm);
+  min-height: 44px;
+}
+
+.log-occasion-input {
+  padding: var(--space-2) var(--space-3);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--fs-sm);
+  min-height: 44px;
+}
+
+.log-hint {
+  font-size: var(--fs-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.log-chips {
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+}
+
+.log-items-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  max-height: 40vh;
+  overflow-y: auto;
+  padding-bottom: var(--space-2);
+}
+
+.log-item-card {
+  position: relative;
+  border: 2px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  background: none;
+  padding: 0;
+  text-align: center;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.log-item-card:active {
+  transform: scale(0.95);
+}
+
+.log-item-card.selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.log-item-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.log-item-placeholder {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.log-item-name {
+  display: block;
+  padding: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text);
+}
+
+.log-item-check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.log-item-skeleton {
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+}
+
+.log-footer {
+  position: sticky;
+  bottom: 0;
+  padding: var(--space-4) 0 0;
+  background: var(--color-surface);
+}
