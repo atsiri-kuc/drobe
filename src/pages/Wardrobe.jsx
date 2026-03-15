@@ -4,7 +4,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { Plus, Search, Filter, ShirtIcon, Camera, X, Sparkles } from 'lucide-react';
+import { Plus, Search, Filter, ShirtIcon, Camera, X, Sparkles, Image } from 'lucide-react';
 import ViewToggle from '../components/ViewToggle';
 import { Link } from 'react-router-dom';
 import { SEASONS, SEASON_EMOJI } from '../utils/utilization';
@@ -203,17 +203,25 @@ export default function Wardrobe() {
               </button>
             </div>
             <form onSubmit={handleAddItem} className="add-form">
-              <div className="photo-upload" onClick={() => document.getElementById('photo-input').click()}>
-                {photoPreview ? (
+              {photoPreview ? (
+                <div className="photo-upload" onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}>
                   <img src={photoPreview} alt="Preview" className="photo-preview" />
-                ) : (
-                  <div className="photo-placeholder">
-                    <Camera size={28} />
-                    <span>Add Photo</span>
-                  </div>
-                )}
-                <input id="photo-input" type="file" accept="image/*" capture="environment" onChange={handlePhotoChange} hidden />
-              </div>
+                  <span className="photo-change-hint">Tap to change</span>
+                </div>
+              ) : (
+                <div className="photo-options">
+                  <button type="button" className="photo-option-btn" onClick={() => document.getElementById('photo-camera').click()}>
+                    <Camera size={24} />
+                    <span>Take Photo</span>
+                  </button>
+                  <button type="button" className="photo-option-btn" onClick={() => document.getElementById('photo-gallery').click()}>
+                    <Image size={24} />
+                    <span>Gallery</span>
+                  </button>
+                </div>
+              )}
+              <input id="photo-camera" type="file" accept="image/*" capture="environment" onChange={handlePhotoChange} hidden />
+              <input id="photo-gallery" type="file" accept="image/*" onChange={handlePhotoChange} hidden />
 
               <div className="input-group">
                 <label htmlFor="item-name">Name *</label>

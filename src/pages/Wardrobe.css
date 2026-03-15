@@ -218,6 +218,7 @@
   overflow: hidden;
   margin-bottom: var(--space-4);
   transition: border-color var(--duration-fast) var(--ease-out);
+  position: relative;
 }
 
 .photo-upload:hover { border-color: var(--color-primary); }
@@ -228,16 +229,49 @@
   object-fit: cover;
 }
 
-.photo-placeholder {
-  width: 100%;
-  height: 100%;
+.photo-change-hint {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  text-align: center;
+  font-size: var(--fs-xs);
+  padding: 6px;
+}
+
+.photo-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.photo-option-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  color: var(--color-text-tertiary);
+  padding: var(--space-5) var(--space-3);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: none;
+  color: var(--color-text-secondary);
   font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.photo-option-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.photo-option-btn:active {
+  transform: scale(0.97);
 }
 
 .form-row {
