@@ -1,26 +1,31 @@
 .view-toggle {
   display: flex;
-  border-radius: var(--radius-full);
-  border: 1.5px solid var(--color-border);
-  overflow: hidden;
+  gap: 2px;
+  align-items: center;
 }
 
 .view-toggle-btn {
-  width: 34px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
+  border-radius: var(--radius-md);
   color: var(--color-text-tertiary);
   cursor: pointer;
   transition: all var(--duration-fast);
 }
 
+.view-toggle-btn:hover {
+  color: var(--color-text-secondary);
+  background: var(--color-primary-light);
+}
+
 .view-toggle-btn.active {
-  background: var(--color-primary);
-  color: #fff;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 /* ── List View for Item Cards ── */
