@@ -12,6 +12,7 @@
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
+  align-items: center;
   margin-bottom: var(--space-4);
 }
 
@@ -19,6 +20,45 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.date-picker-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.date-picker-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.date-picker-input {
+  padding: var(--space-2) var(--space-3) var(--space-2) 34px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--fs-xs);
+  font-family: inherit;
+  min-height: 36px;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.date-picker-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.log-day-count {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--color-text-tertiary);
 }
 
 .log-skeleton-list {
