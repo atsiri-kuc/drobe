@@ -3,7 +3,7 @@ import { doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { Calendar, Plus, ShirtIcon, Clock, X, Trash2 } from 'lucide-react';
+import { Calendar, Plus, ShirtIcon, Clock, X, Trash2, Pencil } from 'lucide-react';
 import LogOutfitModal from '../components/LogOutfitModal';
 import './LogOutfit.css';
 
@@ -13,8 +13,24 @@ function getOutfitDate(outfit) {
     : new Date(outfit.wornAt);
 }
 
-function toDateStr(date) {
+function toLocalDateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function formatDateLabel(dateKey) {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.getTime() === today.getTime()) return 'Today';
+  if (date.getTime() === yesterday.getTime()) return 'Yesterday';
+
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+  });
 }
 
 function formatShort(dateStr) {
@@ -29,7 +45,7 @@ export default function LogOutfit() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
-  // Build item lookup map from shared data
+  // Build item lookup map
   const items = useMemo(() => {
     const map = {};
     allItems.forEach(i => { map[i.id] = i; });
@@ -37,7 +53,6 @@ export default function LogOutfit() {
   }, [allItems]);
 
   async function handleDeleteOutfit(outfitId) {
-    if (!window.confirm('Delete this outfit log?')) return;
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'outfits', outfitId));
       refresh();
@@ -46,14 +61,12 @@ export default function LogOutfit() {
     }
   }
 
-
-
   const hasFilter = fromDate || toDate;
 
   const filteredOutfits = hasFilter
     ? outfits.filter(o => {
         const d = getOutfitDate(o);
-        const dateStr = toDateStr(d);
+        const dateStr = toLocalDateKey(d);
         if (fromDate && dateStr < fromDate) return false;
         if (toDate && dateStr > toDate) return false;
         return true;
@@ -69,47 +82,53 @@ export default function LogOutfit() {
     const now = new Date();
     const start = new Date(now);
     start.setDate(start.getDate() - daysBack);
-    setFromDate(toDateStr(start));
-    setToDate(toDateStr(now));
+    setFromDate(toLocalDateKey(start));
+    setToDate(toLocalDateKey(now));
   }
 
   function applyThisWeek() {
     const now = new Date();
-    const day = now.getDay(); // 0=Sun
+    const day = now.getDay();
     const start = new Date(now);
     start.setDate(start.getDate() - day);
-    setFromDate(toDateStr(start));
-    setToDate(toDateStr(now));
+    setFromDate(toLocalDateKey(start));
+    setToDate(toLocalDateKey(now));
   }
 
   function applyThisMonth() {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    setFromDate(toDateStr(start));
-    setToDate(toDateStr(now));
+    setFromDate(toLocalDateKey(start));
+    setToDate(toLocalDateKey(now));
   }
 
-  function groupByDate(list) {
+  // Group outfits by LOCAL date key (YYYY-MM-DD) — merges all outfits on same day
+  const grouped = useMemo(() => {
     const groups = {};
-    list.forEach(outfit => {
+    filteredOutfits.forEach(outfit => {
       const d = getOutfitDate(outfit);
-      const key = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      const key = toLocalDateKey(d);
       if (!groups[key]) groups[key] = [];
       groups[key].push(outfit);
     });
-    return groups;
-  }
+    // Sort by date descending
+    return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [filteredOutfits]);
 
-  function getRelativeDate(dateStr) {
-    const fmt = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
-    const today = new Date().toLocaleDateString('en-US', fmt);
-    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-US', fmt);
-    if (dateStr === today) return 'Today';
-    if (dateStr === yesterday) return 'Yesterday';
-    return dateStr;
+  // For a day group, collect all unique items across all outfits
+  function getDayItems(dayOutfits) {
+    const seen = new Set();
+    const result = [];
+    dayOutfits.forEach(outfit => {
+      (outfit.itemIds || []).forEach(itemId => {
+        if (!seen.has(itemId) && items[itemId]) {
+          seen.add(itemId);
+          result.push(items[itemId]);
+        }
+      });
+    });
+    return result;
   }
-
-  const grouped = groupByDate(filteredOutfits);
 
   return (
     <div className="page">
@@ -211,53 +230,65 @@ export default function LogOutfit() {
         </div>
       ) : (
         <div className="log-timeline">
-          {Object.entries(grouped).map(([dateStr, dayOutfits]) => (
-            <div key={dateStr} className="log-day">
-              <div className="log-day-header">
-                <Calendar size={16} />
-                <span>{getRelativeDate(dateStr)}</span>
-                <span className="log-day-count">{dayOutfits.length} outfit{dayOutfits.length !== 1 ? 's' : ''}</span>
-              </div>
-              {dayOutfits.map(outfit => (
-                <div key={outfit.id} className="log-outfit-card card">
-                  {outfit.occasion && (
-                    <span className="log-outfit-occasion">{outfit.occasion}</span>
-                  )}
-                  <div className="log-outfit-items">
-                    {(outfit.itemIds || []).map(itemId => {
-                      const item = items[itemId];
-                      if (!item) return null;
-                      return (
-                        <div key={itemId} className="log-outfit-item">
-                          {item.photoURL ? (
-                            <img src={item.photoURL} alt={item.name} className="log-outfit-item-img" />
-                          ) : (
-                            <div className="log-outfit-item-placeholder">
-                              <ShirtIcon size={16} />
-                            </div>
-                          )}
-                          <span className="log-outfit-item-name">{item.name}</span>
-                        </div>
-                      );
-                    })}
+          {grouped.map(([dateKey, dayOutfits]) => {
+            const dayItems = getDayItems(dayOutfits);
+            const occasions = dayOutfits
+              .map(o => o.occasion)
+              .filter(Boolean);
+            const outfitIds = dayOutfits.map(o => o.id);
+
+            return (
+              <div key={dateKey} className="log-day-card card">
+                <div className="log-day-header">
+                  <div className="log-day-title">
+                    <Calendar size={16} />
+                    <span className="log-day-label">{formatDateLabel(dateKey)}</span>
                   </div>
-                  <div className="log-outfit-footer">
-                    <div className="log-outfit-time">
-                      <Clock size={12} />
-                      <span>{outfit.itemIds?.length || 0} items</span>
-                    </div>
+                  <div className="log-day-actions">
                     <button
-                      className="btn-icon-sm btn-icon-danger"
-                      onClick={() => handleDeleteOutfit(outfit.id)}
-                      aria-label="Delete outfit"
+                      className="log-action-btn log-delete-btn"
+                      onClick={() => {
+                        outfitIds.forEach(id => handleDeleteOutfit(id));
+                      }}
+                      title="Delete"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          ))}
+
+                {occasions.length > 0 && (
+                  <div className="log-day-occasions">
+                    {occasions.map((occ, i) => (
+                      <span key={i} className="badge">{occ}</span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="log-outfit-items">
+                  {dayItems.map(item => (
+                    <div key={item.id} className="log-outfit-item">
+                      {item.photoURL ? (
+                        <img src={item.photoURL} alt={item.name} className="log-outfit-item-img" loading="lazy" />
+                      ) : (
+                        <div className="log-outfit-item-placeholder">
+                          <ShirtIcon size={16} />
+                        </div>
+                      )}
+                      <span className="log-outfit-item-name">{item.name}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="log-day-meta">
+                  <span>{dayItems.length} item{dayItems.length !== 1 ? 's' : ''}</span>
+                  {dayOutfits.length > 1 && (
+                    <span>· {dayOutfits.length} logs</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

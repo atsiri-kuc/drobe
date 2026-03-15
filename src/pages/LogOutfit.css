@@ -49,29 +49,23 @@
   left: 10px;
   color: var(--color-text-tertiary);
   pointer-events: none;
-  z-index: 1;
 }
 
 .date-picker-input {
-  padding: var(--space-2) var(--space-3) var(--space-2) 32px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-full);
+  padding: 6px 10px 6px 30px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   background: var(--color-surface);
+  font-size: var(--fs-sm);
   color: var(--color-text);
+  min-width: 120px;
+}
+
+.chip-count {
   font-size: var(--fs-xs);
-  font-family: inherit;
-  min-height: 36px;
-  width: 140px;
-  cursor: pointer;
-  transition: border-color var(--duration-fast) var(--ease-out);
+  opacity: 0.7;
 }
 
-.date-picker-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-/* Quick picks */
 .quick-picks {
   display: flex;
   align-items: center;
@@ -84,16 +78,12 @@
   border: none;
   color: var(--color-primary);
   font-size: var(--fs-xs);
-  font-family: inherit;
   cursor: pointer;
   padding: 2px 0;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: opacity var(--duration-fast);
 }
 
 .quick-pick:hover {
-  opacity: 0.7;
+  text-decoration: underline;
 }
 
 .quick-pick-dot {
@@ -101,88 +91,98 @@
   font-size: var(--fs-xs);
 }
 
-.log-day-count {
-  margin-left: auto;
-  font-size: var(--fs-xs);
-  font-weight: 400;
-  color: var(--color-text-tertiary);
-}
-
-/* ── Skeleton / Timeline ── */
-.log-skeleton-list {
+/* ── Log Timeline ── */
+.log-timeline {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
-.log-skeleton-item {
-  height: 100px;
-  border-radius: var(--radius-lg);
-}
-
-.log-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  padding-bottom: calc(80px + var(--space-6));
+/* Day Card — one card per date, merging all outfits */
+.log-day-card {
+  padding: var(--space-4);
 }
 
 .log-day-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.log-day-title {
+  display: flex;
+  align-items: center;
   gap: var(--space-2);
-  font-weight: 600;
-  font-size: var(--fs-sm);
-  color: var(--color-primary);
-  margin-bottom: var(--space-2);
+  color: var(--color-text);
 }
 
-.log-outfit-card {
-  padding: var(--space-3);
-  margin-bottom: var(--space-2);
+.log-day-label {
+  font-weight: 600;
+  font-size: var(--fs-base);
 }
 
-.log-outfit-occasion {
-  display: inline-block;
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  color: var(--color-primary);
-  background: var(--color-primary-subtle);
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-2);
+.log-day-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.log-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  transition: all var(--duration-fast);
+}
+
+.log-action-btn:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.log-delete-btn:hover {
+  background: hsl(0, 80%, 95%);
+  color: hsl(0, 65%, 48%);
+}
+
+.log-day-occasions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
 }
 
 .log-outfit-items {
   display: flex;
-  gap: var(--space-2);
-  overflow-x: auto;
-  padding-bottom: var(--space-2);
-  scrollbar-width: none;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
-.log-outfit-items::-webkit-scrollbar { display: none; }
-
 .log-outfit-item {
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  width: 64px;
+  width: 72px;
 }
 
 .log-outfit-item-img {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-sm);
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
   object-fit: cover;
 }
 
 .log-outfit-item-placeholder {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-sm);
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
   background: var(--color-primary-light);
   display: flex;
   align-items: center;
@@ -191,26 +191,33 @@
 }
 
 .log-outfit-item-name {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--color-text-secondary);
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 64px;
+  width: 72px;
 }
 
-.log-outfit-footer {
+.log-day-meta {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: var(--space-1);
-}
-
-.log-outfit-time {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  gap: var(--space-2);
   font-size: var(--fs-xs);
   color: var(--color-text-tertiary);
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Skeleton */
+.log-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.log-skeleton-item {
+  height: 120px;
+  border-radius: var(--radius-lg);
 }
