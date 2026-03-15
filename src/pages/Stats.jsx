@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
-import { DollarSign, TrendingUp, ShirtIcon, AlertCircle, Heart, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { DollarSign, TrendingUp, ShirtIcon, AlertCircle, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getUtilization, SEASON_EMOJI, SEASONS } from '../utils/utilization';
 import './Stats.css';
@@ -99,7 +99,6 @@ export default function Stats() {
 
   // Time navigation: null = all time, Date = specific month
   const [viewMonth, setViewMonth] = useState(null);
-  const [selectedSeason, setSelectedSeason] = useState(null);
 
   useEffect(() => { if (user) loadData(); }, [user]);
 
@@ -293,20 +292,7 @@ export default function Stats() {
     };
   }, [items, filteredOutfits, viewMonth, wornItemIds]);
 
-  // ── Season detail: items worn in selected season ──
-  const seasonDetailItems = useMemo(() => {
-    if (!selectedSeason || !stats) return [];
-    const sd = stats.seasonData.find(s => s.season === selectedSeason);
-    if (!sd) return [];
-    return sd.wornItemIds
-      .map(id => itemMap[id])
-      .filter(Boolean)
-      .map(item => ({
-        ...item,
-        periodWears: stats.wearCountInPeriod[item.id] || item.totalWears || 0,
-      }))
-      .sort((a, b) => b.periodWears - a.periodWears);
-  }, [selectedSeason, stats, itemMap]);
+
 
   if (loading) {
     return (
@@ -450,10 +436,11 @@ export default function Stats() {
         <h3 className="section-title">🌡️ Seasonal Summary</h3>
         <div className="season-grid">
           {stats.seasonData.map(s => (
-            <div
+            <Link
               key={s.season}
-              className={`card season-card ${s.wears > 0 ? 'season-card-clickable' : ''}`}
-              onClick={() => s.wears > 0 && setSelectedSeason(s.season)}
+              to={`/stats/season/${s.season}`}
+              className={`card season-card season-card-clickable`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <span className="season-emoji-lg">{s.emoji}</span>
               <span className="season-name">{s.season}</span>
@@ -461,8 +448,8 @@ export default function Stats() {
                 <span>{s.wears} wears</span>
                 <span>{s.items} items</span>
               </div>
-              {s.wears > 0 && <span className="season-tap">Tap to see items →</span>}
-            </div>
+              <span className="season-tap">View items →</span>
+            </Link>
           ))}
         </div>
       </div>
@@ -622,50 +609,6 @@ export default function Stats() {
         </div>
       )}
 
-      {/* ── Season Detail Modal ── */}
-      {selectedSeason && (() => {
-        const sd = stats.seasonData.find(s => s.season === selectedSeason);
-        return (
-          <div className="modal-backdrop" onClick={() => setSelectedSeason(null)}>
-            <div className="modal season-modal" onClick={e => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>{sd?.emoji} {selectedSeason} — Items Worn</h2>
-                <button className="btn-icon" onClick={() => setSelectedSeason(null)}>
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="modal-body">
-                {seasonDetailItems.length === 0 ? (
-                  <p className="section-subtitle">No items worn in this season yet.</p>
-                ) : (
-                  <div className="stats-list">
-                    {seasonDetailItems.map((item, i) => (
-                      <Link
-                        key={item.id}
-                        to={`/wardrobe/${item.id}`}
-                        className="card stats-list-item"
-                        onClick={() => setSelectedSeason(null)}
-                      >
-                        <span className="stats-rank">{i + 1}</span>
-                        {item.photoURL ? (
-                          <img src={item.photoURL} alt={item.name} className="stats-item-img" />
-                        ) : (
-                          <div className="stats-item-placeholder"><ShirtIcon size={16} /></div>
-                        )}
-                        <div className="stats-item-info">
-                          <span className="stats-item-name">{item.name}</span>
-                          <span className="stats-item-meta">{item.category}{item.brand ? ` · ${item.brand}` : ''}</span>
-                        </div>
-                        <span className="badge badge-primary">{item.periodWears} wears</span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 }
