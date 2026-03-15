@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
-import { DollarSign, TrendingUp, ShirtIcon, AlertCircle, Heart } from 'lucide-react';
+import { DollarSign, TrendingUp, ShirtIcon, AlertCircle, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getUtilization, SEASON_EMOJI, SEASONS } from '../utils/utilization';
 import './Stats.css';
@@ -25,19 +25,36 @@ const SEASON_MONTHS = {
   Winter: [11, 0, 1],
 };
 
+const COLOR_MAP = {
+  black: '#2D2D2D', white: '#F5F5F5', navy: '#1B2A4A', blue: '#3B82F6',
+  red: '#EF4444', green: '#22C55E', gray: '#9CA3AF', grey: '#9CA3AF',
+  brown: '#92400E', beige: '#D4BC95', cream: '#FFF4E2', pink: '#EC4899',
+  purple: '#A855F7', orange: '#F97316', yellow: '#EAB308', khaki: '#BDB76B',
+  olive: '#6B8E23', taupe: '#B3A18C', charcoal: '#36454F', maroon: '#800000',
+  burgundy: '#800020', teal: '#2DD4BF', tan: '#D2B48C', camel: '#C4A97D',
+};
+
+function getColorHex(colorName) {
+  if (!colorName) return '#9A9590';
+  return COLOR_MAP[colorName.toLowerCase().trim()] || '#9A9590';
+}
+
+function getOutfitDate(outfit) {
+  return outfit.wornAt?.seconds
+    ? new Date(outfit.wornAt.seconds * 1000)
+    : new Date(outfit.wornAt);
+}
+
 // ── Pure CSS Bar Chart ──
-function BarChart({ data, maxVal }) {
+function BarChart({ data }) {
   if (!data || data.length === 0) return null;
-  const max = maxVal || Math.max(...data.map(d => d.value), 1);
+  const max = Math.max(...data.map(d => d.value), 1);
   return (
     <div className="bar-chart">
       {data.map((d, i) => (
         <div key={i} className="bar-col">
           <div className="bar-wrapper">
-            <div
-              className="bar-fill"
-              style={{ height: `${(d.value / max) * 100}%` }}
-            >
+            <div className="bar-fill" style={{ height: `${(d.value / max) * 100}%` }}>
               {d.value > 0 && <span className="bar-value">{d.value}</span>}
             </div>
           </div>
@@ -69,22 +86,15 @@ function DonutChart({ data, total }) {
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="donut-svg">
         {segments.map((seg, i) => (
           <circle
-            key={i}
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke={seg.color}
-            strokeWidth={strokeWidth}
-            strokeDasharray={seg.dashArray}
-            strokeDashoffset={seg.dashOffset}
-            strokeLinecap="round"
-            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            key={i} cx={size / 2} cy={size / 2} r={radius} fill="none"
+            stroke={seg.color} strokeWidth={strokeWidth}
+            strokeDasharray={seg.dashArray} strokeDashoffset={seg.dashOffset}
+            strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`}
             style={{ transition: 'stroke-dasharray 0.6s ease, stroke-dashoffset 0.6s ease' }}
           />
         ))}
         <text x={size / 2} y={size / 2 - 8} textAnchor="middle" className="donut-total">{total}</text>
-        <text x={size / 2} y={size / 2 + 12} textAnchor="middle" className="donut-label">items</text>
+        <text x={size / 2} y={size / 2 + 12} textAnchor="middle" className="donut-label">items worn</text>
       </svg>
       <div className="donut-legend">
         {segments.map((seg, i) => (
@@ -99,28 +109,14 @@ function DonutChart({ data, total }) {
   );
 }
 
-// ── Color swatch helper ──
-const COLOR_MAP = {
-  black: '#2D2D2D', white: '#F5F5F5', navy: '#1B2A4A', blue: '#3B82F6',
-  red: '#EF4444', green: '#22C55E', gray: '#9CA3AF', grey: '#9CA3AF',
-  brown: '#92400E', beige: '#D4BC95', cream: '#FFF4E2', pink: '#EC4899',
-  purple: '#A855F7', orange: '#F97316', yellow: '#EAB308', khaki: '#BDB76B',
-  olive: '#6B8E23', taupe: '#B3A18C', charcoal: '#36454F', maroon: '#800000',
-  burgundy: '#800020', teal: '#2DD4BF', tan: '#D2B48C', camel: '#C4A97D',
-};
-
-function getColorHex(colorName) {
-  if (!colorName) return '#9A9590';
-  const lower = colorName.toLowerCase().trim();
-  return COLOR_MAP[lower] || '#9A9590';
-}
-
 export default function Stats() {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [outfits, setOutfits] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [freqView, setFreqView] = useState('month');
+
+  // Time navigation: null = all time, Date = specific month
+  const [viewMonth, setViewMonth] = useState(null);
 
   useEffect(() => { if (user) loadData(); }, [user]);
 
@@ -143,31 +139,106 @@ export default function Stats() {
     }
   }
 
-  // ── Compute all stats ──
+  // Period navigation
+  function goToPrevMonth() {
+    const d = viewMonth ? new Date(viewMonth) : new Date();
+    d.setMonth(d.getMonth() - 1);
+    setViewMonth(d);
+  }
+
+  function goToNextMonth() {
+    if (!viewMonth) return;
+    const d = new Date(viewMonth);
+    d.setMonth(d.getMonth() + 1);
+    const now = new Date();
+    // Don't go into the future
+    if (d.getFullYear() > now.getFullYear() ||
+        (d.getFullYear() === now.getFullYear() && d.getMonth() > now.getMonth())) {
+      return;
+    }
+    setViewMonth(d);
+  }
+
+  function getMonthLabel() {
+    if (!viewMonth) return 'All Time';
+    return viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  const isCurrentMonth = viewMonth &&
+    viewMonth.getMonth() === new Date().getMonth() &&
+    viewMonth.getFullYear() === new Date().getFullYear();
+
+  // ── Filter outfits by selected period ──
+  const filteredOutfits = useMemo(() => {
+    if (!viewMonth) return outfits;
+    const year = viewMonth.getFullYear();
+    const month = viewMonth.getMonth();
+    return outfits.filter(o => {
+      const d = getOutfitDate(o);
+      return d.getFullYear() === year && d.getMonth() === month;
+    });
+  }, [outfits, viewMonth]);
+
+  // ── Get item IDs worn in this period ──
+  const wornItemIds = useMemo(() => {
+    const ids = new Set();
+    filteredOutfits.forEach(o => {
+      (o.itemIds || []).forEach(id => ids.add(id));
+    });
+    return ids;
+  }, [filteredOutfits]);
+
+  // ── Build item map for quick lookup ──
+  const itemMap = useMemo(() => {
+    const map = {};
+    items.forEach(i => { map[i.id] = i; });
+    return map;
+  }, [items]);
+
+  // ── Compute all stats scoped to selected period ──
   const stats = useMemo(() => {
     if (items.length === 0) return null;
 
-    const activeItems = items.filter(i => i.status === 'active');
-    const totalValue = activeItems.reduce((sum, i) => sum + (i.purchasePrice || 0), 0);
-    const totalWears = activeItems.reduce((sum, i) => sum + (i.totalWears || 0), 0);
-    const avgCostPerWear = totalWears > 0 ? totalValue / totalWears : 0;
+    const allActive = items.filter(i => i.status === 'active');
 
-    const topWorn = [...activeItems]
-      .filter(i => (i.totalWears || 0) > 0)
-      .sort((a, b) => (b.totalWears || 0) - (a.totalWears || 0))
+    // When viewing a specific month, only show items that were worn
+    const scopedItems = viewMonth
+      ? allActive.filter(i => wornItemIds.has(i.id))
+      : allActive;
+
+    // Count wears per item in this period
+    const wearCountInPeriod = {};
+    filteredOutfits.forEach(o => {
+      (o.itemIds || []).forEach(id => {
+        wearCountInPeriod[id] = (wearCountInPeriod[id] || 0) + 1;
+      });
+    });
+
+    const totalItemsWorn = scopedItems.length;
+    const totalWearsInPeriod = Object.values(wearCountInPeriod).reduce((a, b) => a + b, 0);
+    const totalValue = scopedItems.reduce((sum, i) => sum + (i.purchasePrice || 0), 0);
+
+    // Top worn in period
+    const topWorn = scopedItems
+      .map(i => ({ ...i, periodWears: wearCountInPeriod[i.id] || 0 }))
+      .filter(i => i.periodWears > 0)
+      .sort((a, b) => b.periodWears - a.periodWears)
       .slice(0, 5);
 
-    const bestValue = [...activeItems]
-      .filter(i => (i.totalWears || 0) > 0 && (i.purchasePrice || 0) > 0)
-      .map(i => ({ ...i, cpw: i.purchasePrice / i.totalWears }))
+    // Best value in period
+    const bestValue = scopedItems
+      .filter(i => (wearCountInPeriod[i.id] || 0) > 0 && (i.purchasePrice || 0) > 0)
+      .map(i => ({ ...i, cpw: i.purchasePrice / (wearCountInPeriod[i.id] || 1), periodWears: wearCountInPeriod[i.id] || 0 }))
       .sort((a, b) => a.cpw - b.cpw)
       .slice(0, 5);
 
-    const neverWorn = activeItems.filter(i => (i.totalWears || 0) === 0);
+    // Never worn (only relevant for all-time view)
+    const neverWorn = viewMonth ? [] : allActive.filter(i => (i.totalWears || 0) === 0);
     const neverWornValue = neverWorn.reduce((sum, i) => sum + (i.purchasePrice || 0), 0);
 
+    // Category breakdown — items worn per category
     const catMap = {};
-    activeItems.forEach(i => {
+    scopedItems.forEach(i => {
       const cat = i.category || 'Other';
       if (!catMap[cat]) catMap[cat] = 0;
       catMap[cat]++;
@@ -176,24 +247,23 @@ export default function Stats() {
       .map(([category, count]) => ({ category, count }))
       .sort((a, b) => b.count - a.count);
 
-    // ── Brand Breakdown ──
+    // Brand breakdown
     const brandMap = {};
-    activeItems.forEach(i => {
+    scopedItems.forEach(i => {
       const rawBrand = (i.brand || '').trim();
       if (!rawBrand) return;
-      // Normalize: title-case key
       const brand = rawBrand.charAt(0).toUpperCase() + rawBrand.slice(1).toLowerCase();
       if (!brandMap[brand]) brandMap[brand] = { wears: 0, items: 0 };
-      brandMap[brand].wears += (i.totalWears || 0);
+      brandMap[brand].wears += (wearCountInPeriod[i.id] || 0);
       brandMap[brand].items += 1;
     });
     const brandData = Object.entries(brandMap)
       .map(([brand, d]) => ({ brand, ...d }))
       .sort((a, b) => b.wears - a.wears);
 
-    // ── Color Palette ──
+    // Color palette
     const colorMap = {};
-    activeItems.forEach(i => {
+    scopedItems.forEach(i => {
       const color = (i.color || '').trim().toLowerCase();
       if (!color) return;
       if (!colorMap[color]) colorMap[color] = 0;
@@ -204,96 +274,57 @@ export default function Stats() {
       .map(([color, count]) => ({ color, count, pct: totalColored > 0 ? Math.round((count / totalColored) * 100) : 0 }))
       .sort((a, b) => b.count - a.count);
 
-    // ── Seasonal Summary ──
+    // Seasonal summary — count wears in each season's months within filtered outfits
     const seasonData = SEASONS.map(season => {
       const monthSet = new Set(SEASON_MONTHS[season]);
-      const seasonItems = activeItems.filter(i =>
-        !i.seasons || i.seasons.length === 0 || i.seasons.includes(season)
-      );
-      // Count outfit wears in this season's months
       let seasonWears = 0;
-      outfits.forEach(o => {
-        const d = o.wornAt?.seconds ? new Date(o.wornAt.seconds * 1000) : new Date(o.wornAt);
+      filteredOutfits.forEach(o => {
+        const d = getOutfitDate(o);
         if (monthSet.has(d.getMonth())) {
           seasonWears += (o.itemIds || []).length;
         }
       });
-      return {
-        season,
-        emoji: SEASON_EMOJI[season],
-        items: seasonItems.length,
-        wears: seasonWears,
-      };
+      const seasonItems = scopedItems.filter(i =>
+        !i.seasons || i.seasons.length === 0 || i.seasons.includes(season)
+      );
+      return { season, emoji: SEASON_EMOJI[season], items: seasonItems.length, wears: seasonWears };
     });
 
-    // ── Cost Insights ──
-    const itemsWithPrice = activeItems.filter(i => (i.purchasePrice || 0) > 0);
-    const mostExpensiveNeverWorn = [...neverWorn]
-      .filter(i => (i.purchasePrice || 0) > 0)
-      .sort((a, b) => (b.purchasePrice || 0) - (a.purchasePrice || 0))[0] || null;
+    // Cost insights
+    const avgCostPerWear = totalWearsInPeriod > 0 ? totalValue / totalWearsInPeriod : 0;
     const bestDeal = bestValue[0] || null;
+    const mostExpensiveNeverWorn = viewMonth ? null :
+      [...neverWorn].filter(i => (i.purchasePrice || 0) > 0)
+        .sort((a, b) => (b.purchasePrice || 0) - (a.purchasePrice || 0))[0] || null;
 
     return {
-      totalValue, totalWears, avgCostPerWear, topWorn, bestValue, neverWorn,
-      neverWornValue, categoryData, totalItems: activeItems.length,
-      brandData, colorData, seasonData, mostExpensiveNeverWorn, bestDeal,
-      totalWithPrice: itemsWithPrice.length,
+      totalValue, totalWears: totalWearsInPeriod, avgCostPerWear,
+      topWorn, bestValue, neverWorn, neverWornValue,
+      categoryData, totalItems: totalItemsWorn,
+      brandData, colorData, seasonData,
+      mostExpensiveNeverWorn, bestDeal,
+      wearCountInPeriod,
+      allActiveCount: allActive.length,
     };
-  }, [items, outfits]);
+  }, [items, filteredOutfits, viewMonth, wornItemIds]);
 
-  // ── Wear Frequency Data ──
-  const freqData = useMemo(() => {
-    if (outfits.length === 0) return [];
-    const now = new Date();
+  // ── Bar chart data: daily breakdown for the selected month ──
+  const barData = useMemo(() => {
+    if (!viewMonth || filteredOutfits.length === 0) return null;
+    const year = viewMonth.getFullYear();
+    const month = viewMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    if (freqView === 'week') {
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay());
-      startOfWeek.setHours(0, 0, 0, 0);
-
-      return days.map((label, dayIdx) => {
-        const target = new Date(startOfWeek);
-        target.setDate(startOfWeek.getDate() + dayIdx);
-        const count = outfits.filter(o => {
-          const d = o.wornAt?.seconds ? new Date(o.wornAt.seconds * 1000) : new Date(o.wornAt);
-          return d.getDay() === dayIdx &&
-                 d >= startOfWeek &&
-                 d <= new Date(startOfWeek.getTime() + 7 * 86400000);
-        }).length;
-        return { label, value: count };
-      });
-    }
-
-    if (freqView === 'month') {
-      const weeksInMonth = [];
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      let weekStart = new Date(startOfMonth);
-      let weekNum = 1;
-      while (weekStart <= endOfMonth) {
-        const weekEnd = new Date(Math.min(weekStart.getTime() + 6 * 86400000, endOfMonth.getTime()));
-        const count = outfits.filter(o => {
-          const d = o.wornAt?.seconds ? new Date(o.wornAt.seconds * 1000) : new Date(o.wornAt);
-          return d >= weekStart && d <= new Date(weekEnd.getTime() + 86400000);
-        }).length;
-        weeksInMonth.push({ label: `W${weekNum}`, value: count });
-        weekStart = new Date(weekEnd.getTime() + 86400000);
-        weekNum++;
-      }
-      return weeksInMonth;
-    }
-
-    // Year view — by month
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months.map((label, mIdx) => {
-      const count = outfits.filter(o => {
-        const d = o.wornAt?.seconds ? new Date(o.wornAt.seconds * 1000) : new Date(o.wornAt);
-        return d.getMonth() === mIdx && d.getFullYear() === now.getFullYear();
+    const data = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const count = filteredOutfits.filter(o => {
+        const d = getOutfitDate(o);
+        return d.getDate() === day;
       }).length;
-      return { label, value: count };
-    });
-  }, [outfits, freqView]);
+      data.push({ label: day % 5 === 0 || day === 1 ? String(day) : '', value: count });
+    }
+    return data;
+  }, [filteredOutfits, viewMonth]);
 
   if (loading) {
     return (
@@ -323,22 +354,45 @@ export default function Stats() {
     <div className="page stats-page">
       <h1 className="page-title" style={{ paddingTop: 'var(--space-4)' }}>Stats</h1>
 
+      {/* ── Time Period Navigator ── */}
+      <div className="period-nav">
+        <button
+          className={`chip ${!viewMonth ? 'active' : ''}`}
+          onClick={() => setViewMonth(null)}
+        >
+          All Time
+        </button>
+        <div className="period-selector">
+          <button className="period-arrow" onClick={goToPrevMonth}>
+            <ChevronLeft size={18} />
+          </button>
+          <span className="period-label">{getMonthLabel()}</span>
+          <button
+            className="period-arrow"
+            onClick={goToNextMonth}
+            disabled={!viewMonth || isCurrentMonth}
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </div>
+
       {/* Overview Cards */}
       <div className="stats-overview">
         <div className="card stat-overview-card">
-          <DollarSign size={18} className="stat-overview-icon" />
-          <span className="stat-overview-value">${stats.totalValue.toFixed(0)}</span>
-          <span className="stat-label">Wardrobe Value</span>
-        </div>
-        <div className="card stat-overview-card">
           <ShirtIcon size={18} className="stat-overview-icon" />
-          <span className="stat-overview-value">{stats.totalItems}</span>
-          <span className="stat-label">Active Items</span>
+          <span className="stat-overview-value">{viewMonth ? stats.totalItems : stats.allActiveCount}</span>
+          <span className="stat-label">{viewMonth ? 'Items Worn' : 'Active Items'}</span>
         </div>
         <div className="card stat-overview-card">
           <TrendingUp size={18} className="stat-overview-icon" />
           <span className="stat-overview-value">{stats.totalWears}</span>
-          <span className="stat-label">Total Wears</span>
+          <span className="stat-label">{viewMonth ? 'Wears This Month' : 'Total Wears'}</span>
+        </div>
+        <div className="card stat-overview-card">
+          <DollarSign size={18} className="stat-overview-icon" />
+          <span className="stat-overview-value">${stats.totalValue.toFixed(0)}</span>
+          <span className="stat-label">{viewMonth ? 'Value Worn' : 'Wardrobe Value'}</span>
         </div>
         <div className="card stat-overview-card">
           <DollarSign size={18} className="stat-overview-icon" />
@@ -347,30 +401,27 @@ export default function Stats() {
         </div>
       </div>
 
-      {/* ── 1. Wear Frequency Chart ── */}
-      {outfits.length > 0 && (
+      {/* ── Daily Activity Chart (month view only) ── */}
+      {viewMonth && barData && barData.some(d => d.value > 0) && (
         <div className="stats-section">
-          <div className="section-title-row">
-            <h3 className="section-title">📊 Wear Frequency</h3>
-            <div className="freq-toggle">
-              {['week', 'month', 'year'].map(v => (
-                <button
-                  key={v}
-                  className={`freq-btn ${freqView === v ? 'active' : ''}`}
-                  onClick={() => setFreqView(v)}
-                >
-                  {v.charAt(0).toUpperCase() + v.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
+          <h3 className="section-title">📊 Daily Activity</h3>
           <div className="card chart-card">
-            <BarChart data={freqData} />
+            <BarChart data={barData} />
           </div>
         </div>
       )}
 
-      {/* ── 2. Brand Breakdown ── */}
+      {/* ── Category Breakdown ── */}
+      {stats.categoryData.length > 0 && (
+        <div className="stats-section">
+          <h3 className="section-title">Wardrobe Breakdown</h3>
+          <div className="card donut-card">
+            <DonutChart data={stats.categoryData} total={stats.totalItems || stats.allActiveCount} />
+          </div>
+        </div>
+      )}
+
+      {/* ── Brand Breakdown ── */}
       {stats.brandData.length > 0 && (
         <div className="stats-section">
           <h3 className="section-title">🏷️ Top Brands</h3>
@@ -392,7 +443,7 @@ export default function Stats() {
         </div>
       )}
 
-      {/* ── 3. Color Palette ── */}
+      {/* ── Color Palette ── */}
       {stats.colorData.length > 0 && (
         <div className="stats-section">
           <h3 className="section-title">🎨 Your Color Palette</h3>
@@ -420,7 +471,7 @@ export default function Stats() {
         </div>
       )}
 
-      {/* ── 4. Seasonal Summary ── */}
+      {/* ── Seasonal Summary ── */}
       <div className="stats-section">
         <h3 className="section-title">🌡️ Seasonal Summary</h3>
         <div className="season-grid">
@@ -437,22 +488,24 @@ export default function Stats() {
         </div>
       </div>
 
-      {/* ── 5. Cost Insights ── */}
+      {/* ── Cost Insights ── */}
       <div className="stats-section">
         <h3 className="section-title">💰 Cost Insights</h3>
         <div className="card cost-card">
           <div className="cost-row">
-            <span className="cost-label">Total Wardrobe Value</span>
+            <span className="cost-label">{viewMonth ? 'Value of Items Worn' : 'Total Wardrobe Value'}</span>
             <span className="cost-value">${stats.totalValue.toFixed(0)}</span>
           </div>
           <div className="cost-row">
             <span className="cost-label">Average Cost/Wear</span>
             <span className="cost-value">${stats.avgCostPerWear.toFixed(2)}</span>
           </div>
-          <div className="cost-row">
-            <span className="cost-label">Idle Value (never worn)</span>
-            <span className="cost-value cost-warning">${stats.neverWornValue.toFixed(0)}</span>
-          </div>
+          {!viewMonth && (
+            <div className="cost-row">
+              <span className="cost-label">Idle Value (never worn)</span>
+              <span className="cost-value cost-warning">${stats.neverWornValue.toFixed(0)}</span>
+            </div>
+          )}
           {stats.bestDeal && (
             <div className="cost-row cost-highlight">
               <span className="cost-label">🏆 Best Deal</span>
@@ -468,20 +521,10 @@ export default function Stats() {
         </div>
       </div>
 
-      {/* Donut Chart — Wardrobe Breakdown */}
-      {stats.categoryData.length > 0 && (
-        <div className="stats-section">
-          <h3 className="section-title">Wardrobe Breakdown</h3>
-          <div className="card donut-card">
-            <DonutChart data={stats.categoryData} total={stats.totalItems} />
-          </div>
-        </div>
-      )}
-
-      {/* Top 5 Most Worn */}
+      {/* ── Top Worn ── */}
       {stats.topWorn.length > 0 && (
         <div className="stats-section">
-          <h3 className="section-title">🏆 Most Worn</h3>
+          <h3 className="section-title">🏆 Most Worn{viewMonth ? ' This Month' : ''}</h3>
           <div className="stats-list">
             {stats.topWorn.map((item, i) => (
               <Link key={item.id} to={`/wardrobe/${item.id}`} className="card stats-list-item">
@@ -495,17 +538,17 @@ export default function Stats() {
                   <span className="stats-item-name">{item.name}</span>
                   <span className="stats-item-meta">{item.category}</span>
                 </div>
-                <span className="badge badge-primary">{item.totalWears} wears</span>
+                <span className="badge badge-primary">{item.periodWears} wears</span>
               </Link>
             ))}
           </div>
         </div>
       )}
 
-      {/* Best Value */}
+      {/* ── Best Value ── */}
       {stats.bestValue.length > 0 && (
         <div className="stats-section">
-          <h3 className="section-title">💰 Best Value</h3>
+          <h3 className="section-title">💎 Best Value{viewMonth ? ' This Month' : ''}</h3>
           <div className="stats-list">
             {stats.bestValue.map((item, i) => (
               <Link key={item.id} to={`/wardrobe/${item.id}`} className="card stats-list-item">
@@ -517,7 +560,7 @@ export default function Stats() {
                 )}
                 <div className="stats-item-info">
                   <span className="stats-item-name">{item.name}</span>
-                  <span className="stats-item-meta">${item.purchasePrice} · {item.totalWears} wears</span>
+                  <span className="stats-item-meta">${item.purchasePrice} · {item.periodWears} wears</span>
                 </div>
                 <span className="badge badge-accent">${item.cpw.toFixed(2)}/wear</span>
               </Link>
@@ -526,8 +569,8 @@ export default function Stats() {
         </div>
       )}
 
-      {/* Never Worn */}
-      {stats.neverWorn.length > 0 && (
+      {/* ── Never Worn (all-time only) ── */}
+      {!viewMonth && stats.neverWorn.length > 0 && (
         <div className="stats-section">
           <h3 className="section-title">
             😬 Never Worn
@@ -554,8 +597,8 @@ export default function Stats() {
         </div>
       )}
 
-      {/* Consider Donating */}
-      {(() => {
+      {/* ── Consider Donating (all-time only) ── */}
+      {!viewMonth && (() => {
         const donateItems = items
           .map(item => ({ ...item, util: getUtilization(item) }))
           .filter(item => item.util.level === 'LOW');
@@ -590,6 +633,15 @@ export default function Stats() {
           </div>
         ) : null;
       })()}
+
+      {/* Empty month state */}
+      {viewMonth && stats.totalWears === 0 && (
+        <div className="empty-state">
+          <ShirtIcon size={48} />
+          <h3>No outfits logged this month</h3>
+          <p>Go back to a month with activity, or switch to All Time</p>
+        </div>
+      )}
     </div>
   );
 }
